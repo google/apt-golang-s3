@@ -55,7 +55,7 @@ Config-Item: Unattended-Upgrade::Allowed-Origins::=${distro_id}:${distro_codenam
 func TestCapabilities(t *testing.T) {
 	actual := capabilities().String()
 	if actual != capMsg {
-		t.Errorf("Expected capabilities() to equal: %s Actual: %s", capMsg, actual)
+		t.Errorf("capabilities() = %s; expected %s", actual, capMsg)
 	}
 }
 
@@ -72,14 +72,14 @@ loop:
 			msgs++
 		case <-time.After(10 * time.Millisecond):
 			if reader.Len() > 0 {
-				t.Errorf("Expected to find an empty reader, but found %d bytes", reader.Len())
+				t.Errorf("Found reader with %d bytes; expected reader to be empty", reader.Len())
 			}
 			break loop
 		}
 	}
 
 	if msgs != 2 {
-		t.Errorf("Expected %d messages, but received %d", 2, msgs)
+		t.Errorf("Found %d messages; expected %d", msgs, 2)
 	}
 }
 
@@ -98,6 +98,6 @@ func TestSettingRegion(t *testing.T) {
 	}
 	expected := "us-east-2"
 	if method.region != expected {
-		t.Errorf("Incorrect Region '%s' Expected: %s", method.region, expected)
+		t.Errorf("method.region = %s; expected %s", method.region, expected)
 	}
 }

@@ -60,8 +60,8 @@ func TestMessageString(t *testing.T) {
 	m := &Message{Header: h, Fields: f}
 
 	actual := m.String()
-	if fakeMsg != actual {
-		t.Errorf("Expected m.String() to equal: %s Actual: %s", fakeMsg, actual)
+	if actual != fakeMsg {
+		t.Errorf("m.String() = %s; expected %s", actual, fakeMsg)
 	}
 }
 
@@ -80,7 +80,7 @@ func TestMarshalUnmarshallFakeMsg(t *testing.T) {
 	newMessage := &Message{}
 	newMessage.unmarshalText(bytes)
 	if newMessage.Header.Description != "Fake Description" {
-		t.Error("Failed to marshal -> unmarshal successfully")
+		t.Errorf("Description = %s; expected %s", newMessage.Header.Description, "Fake Description")
 	}
 }
 
@@ -97,7 +97,7 @@ func TestUnmarshalConfigurationMsg(t *testing.T) {
 	expected := "Config-Item: APT::Architecture=amd64"
 	actual := m.Fields[0].String()
 	if actual != expected {
-		t.Errorf("Incorrect field %s\n Expected: %s", actual, expected)
+		t.Errorf("String() = %s;  expected: %s", actual, expected)
 	}
 }
 
@@ -113,17 +113,17 @@ func TestGetFieldValue(t *testing.T) {
 	actual := m.GetFieldValue("Foo")
 	expected := "bar"
 	if actual != expected {
-		t.Errorf("Incorrect field value '%s' Expected: %s", actual, expected)
+		t.Errorf("m.GetFieldValue(\"Foo\") = %s; expected: %s", actual, expected)
 	}
 	actual = m.GetFieldValue("Baz")
 	expected = "qux"
 	if actual != expected {
-		t.Errorf("Incorrect field value '%s' Expected: %s", actual, expected)
+		t.Errorf("m.GetFieldValue(\"Baz\") = %s; expected: %s", actual, expected)
 	}
 	actual = m.GetFieldValue("Filename")
 	expected = "apt-transport.deb"
 	if actual != expected {
-		t.Errorf("Incorrect field value '%s' Expected: %s", actual, expected)
+		t.Errorf("m.GetFieldValue(\"Filename\") = %s; expected: %s", actual, expected)
 	}
 }
 
@@ -139,7 +139,7 @@ func TestGetFieldList(t *testing.T) {
 	actualLength := len(m.GetFieldList("Config-Item"))
 	expectedLength := 2
 	if actualLength != expectedLength {
-		t.Errorf("Incorrect number of fields '%d' Expected: %d", actualLength, expectedLength)
+		t.Errorf("Incorrect number of fields '%d' expected: %d", actualLength, expectedLength)
 	}
 }
 
@@ -150,12 +150,26 @@ func TestUnmarshalAcquireMsg(t *testing.T) {
 	expectedCount := 2
 	count := len(m.Fields)
 	if count != expectedCount {
-		t.Errorf("Expected Fields to contain %d items, but had %d", expectedCount, count)
+		t.Errorf("Found %d fields; expected %d", count, expectedCount)
 	}
 
-	field := m.GetFieldValue("Filename")
-	if field != "/var/cache/apt/archives/partial/python-bernhard_0.2.3-1_all.deb" {
-		t.Errorf("Incorrect field %s", field)
+	status := m.Header.Status
+	expected := 600
+	if status != expected {
+		t.Errorf("Status = %d; expected %d", status, expected)
+	}
+
+	description := m.Header.Description
+	expectedDesc := "URI Acquire"
+	if description != expectedDesc {
+		t.Errorf("Description = %s; expected %s", description, expectedDesc)
+	}
+
+	value := m.GetFieldValue("Filename")
+	expectedVal := "/var/cache/apt/archives/partial/python-bernhard_0.2.3-1_all.deb"
+
+	if value != expectedVal {
+		t.Errorf("m.GetFieldValue(\"Filename\") = %s; expected %s", value, expectedVal)
 	}
 }
 
@@ -163,14 +177,19 @@ func TestUnmarshalFieldsWithMissingSpaces(t *testing.T) {
 	m := &Message{}
 	m.unmarshalText([]byte(acqMsgNoSpaces))
 
-	expectedCount := 4
 	count := len(m.Fields)
-	if count != expectedCount {
-		t.Errorf("Expected Fields to contain %d items, but had %d", expectedCount, count)
+	expected := 4
+	if count != expected {
+		t.Errorf("len(m.Fields) = %d; expected %d", count, expected)
 	}
 
-	field := m.Fields[1]
-	if field.String() != "Filename: Packages.downloaded" {
-		t.Errorf("Incorrect field %s", field)
+	field := m.Fields[0]
+	expectedName := "URI"
+	expectedVal := "s3://my-s3-repository/project-a/dists/trusty/main/binary-amd64/Packages"
+	if field.Name != expectedName {
+		t.Errorf("field.Name = %s; expected %s", field.Name, expectedName)
+	}
+	if field.Value != expectedVal {
+		t.Errorf("field.Value = %s; expected %s", field.Value, expectedVal)
 	}
 }

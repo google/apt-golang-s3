@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package message implements functions to model/manipulate messages specified by
+// the method interface of the APT software package manager. For more information
+// about the APT method interface see, http://www.fifi.org/doc/libapt-pkg-doc/method.html/ch2.html#s2.3.
 package message
 
 import (
@@ -21,21 +24,26 @@ import (
 	"strings"
 )
 
+// Header models the first line of a message specified by the APT method interface.
 type Header struct {
 	Status      int
 	Description string
 }
 
+// Field models the lines of a message specified by the APT method interface that follow a Header line.
 type Field struct {
 	Name  string
 	Value string
 }
 
+// Message models an entore message specified by the APT method interface. It includes a Header
+// and a list of Fields.
 type Message struct {
 	Header *Header
 	Fields []*Field
 }
 
+// FromBytes takes a byte representation of a Message and unmarshals it into a Message.
 func FromBytes(b []byte) (*Message, error) {
 	m := &Message{}
 	err := m.unmarshalText(b)
@@ -45,6 +53,9 @@ func FromBytes(b []byte) (*Message, error) {
 	return m, nil
 }
 
+// GetFieldValue returns the Value property of the Field with the given name. If no field is found
+// with the given name, it returns a zero length string. This is useful for Fields that appear only
+// once in a given Message.
 func (m *Message) GetFieldValue(name string) string {
 	for _, field := range m.Fields {
 		if field.Name == name {
@@ -54,6 +65,8 @@ func (m *Message) GetFieldValue(name string) string {
 	return ""
 }
 
+// GetFieldList returns a slice of Fields with the given name. This is useful when looking for a
+// collection of fields with a given name from the same Message, e.g. 'Config-Item'.
 func (m *Message) GetFieldList(name string) []*Field {
 	fields := []*Field{}
 	for _, field := range m.Fields {
@@ -64,6 +77,7 @@ func (m *Message) GetFieldList(name string) []*Field {
 	return fields
 }
 
+// String returns a string representation of a Message formatted according to the APT method interface.
 func (m *Message) String() string {
 	buffer := &bytes.Buffer{}
 	for _, field := range m.Fields {
@@ -73,10 +87,12 @@ func (m *Message) String() string {
 	return fmt.Sprintf("%s\n%s", m.Header.String(), buffer.String())
 }
 
+// String returns a string representation of a Header formatted according to the APT method interface.
 func (h *Header) String() string {
 	return fmt.Sprintf("%d %s", h.Status, h.Description)
 }
 
+// String returns a string representation of a Field formatted according to the APT method interface.
 func (f *Field) String() string {
 	return fmt.Sprintf("%s: %s", f.Name, f.Value)
 }
@@ -92,6 +108,8 @@ func (m *Message) unmarshalText(text []byte) error {
 	return err
 }
 
+// parse splits a string message by line, and then constructs a Message
+// from a Header and slice of Fields.
 func parse(value string) (Message, error) {
 	trimmed := strings.TrimSpace(value)
 	lines := strings.Split(trimmed, "\n")
@@ -106,11 +124,15 @@ func parse(value string) (Message, error) {
 	return Message{Header: header, Fields: fields}, nil
 }
 
-// Lines might look like the following
-//102 Status
-//200 URI Start
-//201 URI Done
-//601 Configuration
+// parseHeader splits a string header by white space and constructs a Header
+// based on the status code and description.
+//
+// Lines might look like the following:
+//
+// 102 Status
+// 200 URI Start
+// 201 URI Done
+// 601 Configuration
 func parseHeader(headerLine string) (*Header, error) {
 	headerLine = strings.TrimSpace(headerLine)
 	headerParts := strings.Split(headerLine, " ")
@@ -136,9 +158,13 @@ func parseFields(fieldLines []string) []*Field {
 	return fields
 }
 
-// Lines might look like the following
-//URI:s3://my-s3-repository/project-a/dists/trusty/main/binary-amd64/Packages
-//Config-Item: Aptitude::Get-Root-Command=sudo:/usr/bin/sudo
+// parseField splits a string field by colon and constructs a Field based on
+// the name and value.
+//
+// Lines might look like the following:
+//
+// URI:s3://my-s3-repository/project-a/dists/trusty/main/binary-amd64/Packages
+// Config-Item: Aptitude::Get-Root-Command=sudo:/usr/bin/sudo
 func parseField(fieldLine string) *Field {
 	fieldLine = strings.TrimSpace(fieldLine)
 	fieldParts := strings.Split(fieldLine, ":")

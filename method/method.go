@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package method implements functions to satisfy the method interface of the APT
+// software package manager. For more information about the APT method interface
+// see, http://www.fifi.org/doc/libapt-pkg-doc/method.html/ch2.html#s2.3.
 package method
 
 import (
@@ -92,6 +95,7 @@ const (
 	fieldValueConnecting = "Connecting to s3.amazonaws.com"
 )
 
+// A Method implements the logic to process incoming apt messages and respond accordingly.
 type Method struct {
 	region  string
 	msgChan chan []byte
@@ -99,6 +103,7 @@ type Method struct {
 	stdout  *log.Logger
 }
 
+// NewMethod returns a new Method configured to read from os.Stdin and write to os.Stdout.
 func NewMethod() *Method {
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -111,6 +116,9 @@ func NewMethod() *Method {
 	return m
 }
 
+// Run flushes the Method's capabilities and then begins reading messages from os.Stdin
+// and writing results to os.Stdout. The running Method waits for all Messages to be
+// processed before exiting.
 func (m *Method) Run() {
 	m.flushCapabilities()
 	go m.readInput(os.Stdin)
@@ -123,6 +131,11 @@ func (m *Method) flushCapabilities() {
 	m.stdout.Println(msg)
 }
 
+// readInput reads from the provided io.Reader and flushes each message
+// to the Method's Message channel for processing. It stops reading when
+// io.Reader is empty. Each message increments the Method's sync.WaitGroup
+// by 1. Once all messages have been read from the io.Reader, the Method's
+// sync.WaitGroup is decremented by 1.
 func (m *Method) readInput(input io.Reader) {
 	scanner := bufio.NewScanner(input)
 	buffer := &bytes.Buffer{}
@@ -158,6 +171,8 @@ func capabilities() *message.Message {
 	return &message.Message{Header: header, Fields: fields}
 }
 
+// processMessages loops over the channel of Messages
+// and starts a goroutine to process each Message.
 func (m *Method) processMessages() {
 	for {
 		bytes := <-m.msgChan
@@ -165,7 +180,8 @@ func (m *Method) processMessages() {
 	}
 }
 
-// turn a byte slice into a Message and dispatch
+// handleBytes initializes a new Message and dispatches it according to
+// the Message.Header.Status value.
 func (m *Method) handleBytes(b []byte) {
 	msg, err := message.FromBytes(b)
 	m.handleError(err)
@@ -178,7 +194,8 @@ func (m *Method) handleBytes(b []byte) {
 	}
 }
 
-//fetch the content from s3 and write it to disk
+// uriAcquire downloads and stores objects from S3 based on the contents
+// of the provided Message.
 func (m *Method) uriAcquire(msg *message.Message) {
 	uri := msg.GetFieldValue(fieldNameURI)
 	s3Uri, err := url.Parse(uri)
@@ -223,6 +240,9 @@ func (m *Method) uriAcquire(msg *message.Message) {
 	m.outputURIDone(s3Uri, numBytes, lastModified, filename)
 }
 
+// s3Client provides an initialized s3iface.S3API based on the contents of the provided
+// url.URL. The access key id and secret access key are assumed to correspond to the
+// Username() and Password() functions on the URL's User.
 func (m *Method) s3Client(s3Uri *url.URL) s3iface.S3API {
 	awsAccessKeyID := s3Uri.User.Username()
 	awsSecretAccessKey, _ := s3Uri.User.Password()
@@ -235,7 +255,9 @@ func (m *Method) s3Client(s3Uri *url.URL) s3iface.S3API {
 	})
 }
 
-// look through the fields and see if there are any that we are interested in
+// configure loops though the Config-Item fields of a configuration Message and
+// sets the appropriate state on the Method based on the field values. Once the configuration
+// has been applied, the Method's sync.WaitGroup is decremented by 1.
 func (m *Method) configure(msg *message.Message) {
 	items := msg.GetFieldList(fieldNameConfigItem)
 	for _, field := range items {
@@ -330,12 +352,16 @@ func (m *Method) outputURIStart(s3Uri *url.URL, size int64, lastModified time.Ti
 	m.stdout.Println(msg.String())
 }
 
+// outputURIDone prints a message including the details of the finished URI, and subsequently
+// decrements the Method's sync.WaitGroup by 1.
 func (m *Method) outputURIDone(s3Uri *url.URL, size int64, lastModified time.Time, filename string) {
 	msg := m.uriDone(s3Uri, size, lastModified, filename)
 	m.stdout.Println(msg.String())
 	m.wg.Done()
 }
 
+// outputURIDone prints a message including the details of the URI that could not be found, and subsequently
+// decrements the Method's sync.WaitGroup by 1.
 func (m *Method) outputNotFound(s3Uri *url.URL) {
 	msg := notFound(s3Uri)
 	m.stdout.Println(msg.String())
@@ -347,6 +373,8 @@ func (m *Method) outputGeneralFailure(err error) {
 	m.stdout.Println(msg.String())
 }
 
+// handleError writes the contents of the given error and then exits the program, as
+// specified in the APT method interface documentation.
 func (m *Method) handleError(err error) {
 	if err != nil {
 		m.outputGeneralFailure(err)
@@ -362,6 +390,8 @@ func field(name string, value string) *message.Field {
 	return &message.Field{Name: name, Value: value}
 }
 
+// lastModified returns a Field with the given Time formatted using the RFC1123 specification
+// in GMT, as specified in the APT method interface documentation.
 func (m *Method) lastModified(t time.Time) *message.Field {
 	gmt, err := time.LoadLocation("GMT")
 	m.handleError(err)

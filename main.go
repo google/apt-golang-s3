@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Binary apt-golang-s3 implements the APT method interface in order to
+// allow hosting of APT packages in Amazon S3. For more information about
+// the APT method interface see, http://www.fifi.org/doc/libapt-pkg-doc/method.html/ch2.html#s2.3.
 package main
 
 import (

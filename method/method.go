@@ -206,6 +206,7 @@ func (m *Method) uriAcquire(msg *message.Message) {
 	bucket := pathParts[1]
 	key := strings.Join(pathParts[2:], "/")
 
+	m.outputRequestStatus(s3Uri, fieldValueConnecting)
 	client := m.s3Client(s3Uri)
 
 	headObjectInput := &s3.HeadObjectInput{Bucket: &bucket, Key: &key}
@@ -275,10 +276,10 @@ func (m *Method) configure(msg *message.Message) {
 // 102 Status
 // URI: s3://fake-access-key-id:fake-secret-access-key@s3.amazonaws.com/bucket-name/apt/trusty/riemann-sumd_0.7.2-1_all.deb
 // Message: Connecting to s3.amazonaws.com
-func requestStatus(s3Uri *url.URL) *message.Message {
+func requestStatus(s3Uri *url.URL, status string) *message.Message {
 	h := header(headerCodeStatus, headerDescriptionStatus)
 	uriField := field(fieldNameURI, s3Uri.String())
-	messageField := field(fieldNameMessage, fieldValueConnecting)
+	messageField := field(fieldNameMessage, status)
 	return &message.Message{Header: h, Fields: []*message.Field{uriField, messageField}}
 }
 
@@ -353,8 +354,8 @@ func generalFailure(err error) *message.Message {
 	return &message.Message{Header: h, Fields: []*message.Field{messageField}}
 }
 
-func (m *Method) outputRequestStatus(s3Uri *url.URL) {
-	msg := requestStatus(s3Uri)
+func (m *Method) outputRequestStatus(s3Uri *url.URL, status string) {
+	msg := requestStatus(s3Uri, status)
 	m.stdout.Println(msg.String())
 }
 

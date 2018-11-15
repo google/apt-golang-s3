@@ -73,12 +73,13 @@ The .deb file produced by `build-deb.sh` will install the method in the correct 
 
 ## APT Repository Source Configuration
 
-AWS keys are specified in the apt sources list configuration as follows:
+We recommend issuing a separate set of API keys, with read-only access, to the S3 bucket that hosts your repository. The keys are specified in the apt sources list configuration as follows:
 
 ```
 $ cat /etc/apt/sources.list.d/my-private-repo.list
 deb s3://aws-access-key-id:aws-secret-access-key@s3.amazonaws.com/my-private-repo-bucket stable main
 ```
+
 ## How it works
 
 Apt creates a child process using the `/usr/lib/apt/methods/s3` binary and writes to that processes standard input

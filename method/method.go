@@ -95,6 +95,10 @@ const (
 	fieldValueConnecting = "Connecting to s3.amazonaws.com"
 )
 
+const (
+	configItemAcquireS3Region = "Acquire::s3::region"
+)
+
 // A Method implements the logic to process incoming apt messages and respond accordingly.
 type Method struct {
 	region  string
@@ -264,7 +268,7 @@ func (m *Method) configure(msg *message.Message) {
 	items := msg.GetFieldList(fieldNameConfigItem)
 	for _, field := range items {
 		aptConfig := strings.Split(field.Value, "=")
-		if aptConfig[0] == "Acquire::s3::region" {
+		if aptConfig[0] == configItemAcquireS3Region {
 			m.region = aptConfig[1]
 		}
 	}

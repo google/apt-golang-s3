@@ -116,8 +116,8 @@ func NewMethod() *Method {
 	return m
 }
 
-// Run flushes the Method's capabilities and then begins reading messages from os.Stdin
-// and writing results to os.Stdout. The running Method waits for all Messages to be
+// Run flushes the Method's capabilities and then begins reading messages from os.Stdin.
+// Results are written to os.Stdout. The running Method waits for all Messages to be
 // processed before exiting.
 func (m *Method) Run() {
 	m.flushCapabilities()

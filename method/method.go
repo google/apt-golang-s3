@@ -135,7 +135,9 @@ func (m *Method) flushCapabilities() {
 // to the Method's Message channel for processing. It stops reading when
 // io.Reader is empty. Each message increments the Method's sync.WaitGroup
 // by 1. Once all messages have been read from the io.Reader, the Method's
-// sync.WaitGroup is decremented by 1.
+// sync.WaitGroup is decremented by 1. Each code path that processes a
+// message is responsible for decrementing the WaitGroup when the code
+// path terminates.
 func (m *Method) readInput(input io.Reader) {
 	scanner := bufio.NewScanner(input)
 	buffer := &bytes.Buffer{}
@@ -210,7 +212,6 @@ func (m *Method) uriAcquire(msg *message.Message) {
 	headObjectOutput, err := client.HeadObject(headObjectInput)
 	if err != nil {
 		if reqErr, ok := err.(awserr.RequestFailure); ok {
-			// A service error occurred
 			if reqErr.StatusCode() == 404 {
 				m.outputNotFound(s3Uri)
 				return
@@ -269,9 +270,11 @@ func (m *Method) configure(msg *message.Message) {
 	m.wg.Done()
 }
 
-//102 Status
-//URI: s3://fake-access-key-id:fake-secret-access-key@s3.amazonaws.com/bucket-name/apt/trusty/riemann-sumd_0.7.2-1_all.deb
-//Message: Connecting to s3.amazonaws.com
+// requestStatus constructs a Message that when printed looks like the following example:
+//
+// 102 Status
+// URI: s3://fake-access-key-id:fake-secret-access-key@s3.amazonaws.com/bucket-name/apt/trusty/riemann-sumd_0.7.2-1_all.deb
+// Message: Connecting to s3.amazonaws.com
 func requestStatus(s3Uri *url.URL) *message.Message {
 	h := header(headerCodeStatus, headerDescriptionStatus)
 	uriField := field(fieldNameURI, s3Uri.String())
@@ -279,10 +282,12 @@ func requestStatus(s3Uri *url.URL) *message.Message {
 	return &message.Message{Header: h, Fields: []*message.Field{uriField, messageField}}
 }
 
-//200 URI Start
-//URI: s3://fake-access-key-id:fake-secret-access-key@s3.amazonaws.com/bucket-name/apt/trusty/riemann-sumd_0.7.2-1_all.deb
-//Size: 9012
-//Last-Modified: Thu, 25 Oct 2018 20:17:39 GMT
+// uriStart constructs a Message that when printed looks like the following example:
+//
+// 200 URI Start
+// URI: s3://fake-access-key-id:fake-secret-access-key@s3.amazonaws.com/bucket-name/apt/trusty/riemann-sumd_0.7.2-1_all.deb
+// Size: 9012
+// Last-Modified: Thu, 25 Oct 2018 20:17:39 GMT
 func (m *Method) uriStart(s3Uri *url.URL, size int64, t time.Time) *message.Message {
 	h := header(headerCodeURIStart, headerDescriptionURIStart)
 	uriField := field(fieldNameURI, s3Uri.String())
@@ -291,16 +296,18 @@ func (m *Method) uriStart(s3Uri *url.URL, size int64, t time.Time) *message.Mess
 	return &message.Message{Header: h, Fields: []*message.Field{uriField, sizeField, lmField}}
 }
 
-//201 URI Done
-//URI: s3://fake-access-key-id:fake-secret-access-key@s3.amazonaws.com/bucket-name/apt/trusty/riemann-sumd_0.7.2-1_all.deb
-//Filename: /var/cache/apt/archives/partial/riemann-sumd_0.7.2-1_all.deb
-//Size: 9012
-//Last-Modified: Thu, 25 Oct 2018 20:17:39 GMT
-//MD5-Hash: 1964cb59e339e7a41cf64e9d40f219b1
-//MD5Sum-Hash: 1964cb59e339e7a41cf64e9d40f219b1
-//SHA1-Hash: 0d02ab49503be20d153cea63a472c43ebfad2efc
-//SHA256-Hash: 92a3f70eb1cf2c69880988a8e74dc6fea7e4f15ee261f74b9be55c866f69c64b
-//SHA512-Hash: ab3b1c94618cb58e2147db1c1d4bd3472f17fb11b1361e77216b461ab7d5f5952a5c6bb0443a1507d8ca5ef1eb18ac7552d0f2a537a0d44b8612d7218bf379fb
+// uriDone constructs a Message that when printed looks like the following example:
+//
+// 201 URI Done
+// URI: s3://fake-access-key-id:fake-secret-access-key@s3.amazonaws.com/bucket-name/apt/trusty/riemann-sumd_0.7.2-1_all.deb
+// Filename: /var/cache/apt/archives/partial/riemann-sumd_0.7.2-1_all.deb
+// Size: 9012
+// Last-Modified: Thu, 25 Oct 2018 20:17:39 GMT
+// MD5-Hash: 1964cb59e339e7a41cf64e9d40f219b1
+// MD5Sum-Hash: 1964cb59e339e7a41cf64e9d40f219b1
+// SHA1-Hash: 0d02ab49503be20d153cea63a472c43ebfad2efc
+// SHA256-Hash: 92a3f70eb1cf2c69880988a8e74dc6fea7e4f15ee261f74b9be55c866f69c64b
+// SHA512-Hash: ab3b1c94618cb58e2147db1c1d4bd3472f17fb11b1361e77216b461ab7d5f5952a5c6bb0443a1507d8ca5ef1eb18ac7552d0f2a537a0d44b8612d7218bf379fb
 func (m *Method) uriDone(s3Uri *url.URL, size int64, t time.Time, filename string) *message.Message {
 	h := header(headerCodeURIDone, headerDescriptionURIDone)
 	uriField := field(fieldNameURI, s3Uri.String())
@@ -324,9 +331,11 @@ func (m *Method) uriDone(s3Uri *url.URL, size int64, t time.Time, filename strin
 	return &message.Message{Header: h, Fields: fields}
 }
 
-//400 URI Failure
-//Message: The specified key does not exist.
-//URI: s3://fake-access-key-id:fake-secret-access-key@s3.amazonaws.com/bucket-name/apt/trusty/riemann-sumd_0.7.2-1_all.deb
+// notFound constructs a Message that when printed looks like the following example:
+//
+// 400 URI Failure
+// Message: The specified key does not exist.
+// URI: s3://fake-access-key-id:fake-secret-access-key@s3.amazonaws.com/bucket-name/apt/trusty/riemann-sumd_0.7.2-1_all.deb
 func notFound(s3Uri *url.URL) *message.Message {
 	h := header(headerCodeURIFailure, headerDescriptionURIFailure)
 	uriField := field(fieldNameURI, s3Uri.String())
@@ -334,8 +343,10 @@ func notFound(s3Uri *url.URL) *message.Message {
 	return &message.Message{Header: h, Fields: []*message.Field{uriField, messageField}}
 }
 
-//401 URI Failure
-//Message: Error retrieving ...
+// generalFailure constructs a Message that when printed looks like the following example:
+//
+// 401 General Failure
+// Message: Error retrieving ...
 func generalFailure(err error) *message.Message {
 	h := header(headerCodeGeneralFailure, headerDescriptionGeneralFailure)
 	messageField := field(fieldNameMessage, err.Error())

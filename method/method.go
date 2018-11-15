@@ -50,6 +50,7 @@ import (
 
 const (
 	headerCodeCapabilities   = 100
+	headerCodeGeneralLog     = 101
 	headerCodeStatus         = 102
 	headerCodeURIStart       = 200
 	headerCodeURIDone        = 201
@@ -61,6 +62,7 @@ const (
 
 const (
 	headerDescriptionCapabilities   = "Capabilities"
+	headerDescriptionGeneralLog     = "Log"
 	headerDescriptionStatus         = "Status"
 	headerDescriptionURIStart       = "URI Start"
 	headerDescriptionURIDone        = "URI Done"
@@ -348,6 +350,16 @@ func notFound(s3Uri *url.URL) *message.Message {
 	return &message.Message{Header: h, Fields: []*message.Field{uriField, messageField}}
 }
 
+// generalLog constructs a Message that when printed looks like the following example:
+//
+// 101 Log
+// Message: Set the s3 region to us-west-1 based on Config-Item Acquire::s3:region.
+func generalLog(status string) *message.Message {
+	h := header(headerCodeGeneralLog, headerDescriptionGeneralLog)
+	messageField := field(fieldNameMessage, status)
+	return &message.Message{Header: h, Fields: []*message.Field{messageField}}
+}
+
 // generalFailure constructs a Message that when printed looks like the following example:
 //
 // 401 General Failure
@@ -360,6 +372,11 @@ func generalFailure(err error) *message.Message {
 
 func (m *Method) outputRequestStatus(s3Uri *url.URL, status string) {
 	msg := requestStatus(s3Uri, status)
+	m.stdout.Println(msg.String())
+}
+
+func (m *Method) outputGeneralLog(status string) {
+	msg := generalLog(status)
 	m.stdout.Println(msg.String())
 }
 

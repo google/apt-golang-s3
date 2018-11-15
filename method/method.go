@@ -103,10 +103,11 @@ const (
 
 // A Method implements the logic to process incoming apt messages and respond accordingly.
 type Method struct {
-	region  string
-	msgChan chan []byte
-	wg      *sync.WaitGroup
-	stdout  *log.Logger
+	region     string
+	msgChan    chan []byte
+	configured bool
+	wg         *sync.WaitGroup
+	stdout     *log.Logger
 }
 
 // NewMethod returns a new Method configured to read from os.Stdin and write to os.Stdout.
@@ -114,10 +115,11 @@ func NewMethod() *Method {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	m := &Method{
-		region:  endpoints.UsEast1RegionID,
-		msgChan: make(chan []byte),
-		wg:      &wg,
-		stdout:  log.New(os.Stdout, "", 0),
+		region:     endpoints.UsEast1RegionID,
+		msgChan:    make(chan []byte),
+		configured: false,
+		wg:         &wg,
+		stdout:     log.New(os.Stdout, "", 0),
 	}
 	return m
 }
@@ -202,9 +204,22 @@ func (m *Method) handleBytes(b []byte) {
 	}
 }
 
+// waitForConfiguration ensures that the configuration Message from APT
+// has been fully processed before continuing.
+func (m *Method) waitForConfiguration() {
+	for {
+		if m.configured == false {
+			time.Sleep(1 * time.Millisecond)
+		} else {
+			return
+		}
+	}
+}
+
 // uriAcquire downloads and stores objects from S3 based on the contents
 // of the provided Message.
 func (m *Method) uriAcquire(msg *message.Message) {
+	m.waitForConfiguration()
 	uri := msg.GetFieldValue(fieldNameURI)
 	s3Uri, err := url.Parse(uri)
 	m.handleError(err)
@@ -274,6 +289,7 @@ func (m *Method) configure(msg *message.Message) {
 			m.region = aptConfig[1]
 		}
 	}
+	m.configured = true
 	m.wg.Done()
 }
 

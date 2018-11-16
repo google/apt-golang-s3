@@ -71,7 +71,9 @@ apt-golang-s3  apt-golang-s3_1_amd64.deb  build-deb.sh  Dockerfile  go.mod  go.s
 The `apt-golang-s3` binary is an executable. To install it copy it to `/usr/lib/apt/methods/s3` on your computer.
 The .deb file produced by `build-deb.sh` will install the method in the correct place.
 
-## APT Repository Source Configuration
+
+## Configuration
+### APT Repository Source Configuration
 
 We recommend issuing a separate set of API keys, with read-only access, to the S3 bucket that hosts your repository. The keys are specified in the apt sources list configuration as follows:
 
@@ -79,6 +81,16 @@ We recommend issuing a separate set of API keys, with read-only access, to the S
 $ cat /etc/apt/sources.list.d/my-private-repo.list
 deb s3://aws-access-key-id:aws-secret-access-key@s3.amazonaws.com/my-private-repo-bucket stable main
 ```
+
+### APT Method Configuration
+
+The current default AWS region is set to `us-east-1`, but can be overridden by adding an option in your apt configuration, e.g.
+
+```
+echo "Acquire::s3::region us-east-1;" > /etc/apt/apt.conf.d/s3
+```
+
+Additional configuration options may be added in the future.
 
 ## How it works
 

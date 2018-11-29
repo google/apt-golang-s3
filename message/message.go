@@ -60,9 +60,9 @@ func FromBytes(b []byte) (*Message, error) {
 // If no field is found with the given name, it returns a zero length string.
 // This is useful for Fields that appear only once in a given Message.
 func (m *Message) GetFieldValue(name string) (string, bool) {
-	for _, field := range m.Fields {
-		if field.Name == name {
-			return field.Value, true
+	for _, f := range m.Fields {
+		if f.Name == name {
+			return f.Value, true
 		}
 	}
 	return "", false
@@ -73,9 +73,9 @@ func (m *Message) GetFieldValue(name string) (string, bool) {
 // Message, e.g. 'Config-Item'.
 func (m *Message) GetFieldList(name string) []*Field {
 	fields := []*Field{}
-	for _, field := range m.Fields {
-		if field.Name == name {
-			fields = append(fields, field)
+	for _, f := range m.Fields {
+		if f.Name == name {
+			fields = append(fields, f)
 		}
 	}
 	return fields
@@ -84,12 +84,12 @@ func (m *Message) GetFieldList(name string) []*Field {
 // String returns a string representation of a Message formatted according to
 // the APT method interface.
 func (m *Message) String() string {
-	buffer := &bytes.Buffer{}
-	for _, field := range m.Fields {
-		buffer.WriteString(field.String())
-		buffer.WriteString("\n")
+	buf := &bytes.Buffer{}
+	for _, f := range m.Fields {
+		buf.WriteString(f.String())
+		buf.WriteString("\n")
 	}
-	return fmt.Sprintf("%s\n%s", m.Header.String(), buffer.String())
+	return fmt.Sprintf("%s\n%s", m.Header.String(), buf.String())
 }
 
 // String returns a string representation of a Header formatted according to
@@ -109,9 +109,9 @@ func (m *Message) marshalText() (text []byte, err error) {
 	return []byte(t), nil
 }
 
-func (m *Message) unmarshalText(text []byte) error {
+func (m *Message) unmarshalText(b []byte) error {
 	var err error
-	*m, err = parse(string(text))
+	*m, err = parse(string(b))
 	return err
 }
 
@@ -140,9 +140,9 @@ func parse(value string) (Message, error) {
 // 200 URI Start
 // 201 URI Done
 // 601 Configuration
-func parseHeader(headerLine string) (*Header, error) {
-	headerLine = strings.TrimSpace(headerLine)
-	headerParts := strings.Split(headerLine, " ")
+func parseHeader(line string) (*Header, error) {
+	line = strings.TrimSpace(line)
+	headerParts := strings.Split(line, " ")
 	statusString := strings.TrimSpace(headerParts[0])
 	statusCode, err := strconv.Atoi(statusString)
 	if err != nil {
@@ -152,15 +152,15 @@ func parseHeader(headerLine string) (*Header, error) {
 	for idx, descPart := range headerParts[1:] {
 		descriptionParts[idx] = strings.TrimSpace(descPart)
 	}
-	description := strings.Join(descriptionParts, " ")
-	return &Header{Status: statusCode, Description: description}, nil
+	desc := strings.Join(descriptionParts, " ")
+	return &Header{Status: statusCode, Description: desc}, nil
 }
 
-func parseFields(fieldLines []string) []*Field {
+func parseFields(lines []string) []*Field {
 	fields := []*Field{}
-	for _, fieldLine := range fieldLines {
-		field := parseField(fieldLine)
-		fields = append(fields, field)
+	for _, l := range lines {
+		f := parseField(l)
+		fields = append(fields, f)
 	}
 	return fields
 }
@@ -172,14 +172,14 @@ func parseFields(fieldLines []string) []*Field {
 //
 // URI:s3://my-s3-repository/project-a/dists/trusty/main/binary-amd64/Packages
 // Config-Item: Aptitude::Get-Root-Command=sudo:/usr/bin/sudo
-func parseField(fieldLine string) *Field {
-	fieldLine = strings.TrimSpace(fieldLine)
-	fieldParts := strings.Split(fieldLine, ":")
-	fieldName := fieldParts[0]
+func parseField(line string) *Field {
+	line = strings.TrimSpace(line)
+	fieldParts := strings.Split(line, ":")
+	name := fieldParts[0]
 	valueParts := make([]string, len(fieldParts[1:]))
 	for idx, valuePart := range fieldParts[1:] {
 		valueParts[idx] = strings.TrimSpace(valuePart)
 	}
-	fieldValue := strings.Join(valueParts, ":")
-	return &Field{Name: fieldName, Value: fieldValue}
+	value := strings.Join(valueParts, ":")
+	return &Field{Name: name, Value: value}
 }

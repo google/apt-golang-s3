@@ -250,9 +250,9 @@ func (m *Method) uriAcquire(msg *message.Message) {
 		}
 	}
 
-	expectedLength := *headObjectOutput.ContentLength
+	expectedLen := *headObjectOutput.ContentLength
 	lastModified := *headObjectOutput.LastModified
-	m.outputURIStart(s3Uri, expectedLength, lastModified)
+	m.outputURIStart(s3Uri, expectedLen, lastModified)
 
 	filename, hasField := msg.GetFieldValue(fieldNameFilename)
 	if !hasField {
@@ -295,9 +295,9 @@ func (m *Method) s3Client(s3Uri *url.URL) s3iface.S3API {
 func (m *Method) configure(msg *message.Message) {
 	items := msg.GetFieldList(fieldNameConfigItem)
 	for _, field := range items {
-		aptConfig := strings.Split(field.Value, "=")
-		if aptConfig[0] == configItemAcquireS3Region {
-			m.region = aptConfig[1]
+		config := strings.Split(field.Value, "=")
+		if config[0] == configItemAcquireS3Region {
+			m.region = config[1]
 		}
 	}
 	m.configured = true

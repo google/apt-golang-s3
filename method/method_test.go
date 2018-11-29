@@ -61,7 +61,7 @@ func TestCapabilities(t *testing.T) {
 
 func TestReadInputFinishes(t *testing.T) {
 	reader := strings.NewReader(acqMsg)
-	method := NewMethod()
+	method := New()
 	go method.readInput(reader)
 
 	msgs := 0
@@ -85,7 +85,7 @@ loop:
 
 func TestSettingRegion(t *testing.T) {
 	reader := strings.NewReader(configMsg)
-	method := NewMethod()
+	method := New()
 	go method.readInput(reader)
 
 	//consume the messages on the channel

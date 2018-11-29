@@ -22,6 +22,5 @@ import (
 )
 
 func main() {
-	m := method.NewMethod()
-	m.Run()
+	method.New().Run()
 }

@@ -110,8 +110,8 @@ type Method struct {
 	stdout     *log.Logger
 }
 
-// NewMethod returns a new Method configured to read from os.Stdin and write to os.Stdout.
-func NewMethod() *Method {
+// New returns a new Method configured to read from os.Stdin and write to os.Stdout.
+func New() *Method {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	m := &Method{

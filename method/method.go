@@ -295,8 +295,8 @@ func (m *Method) s3Client(s3Uri *url.URL) s3iface.S3API {
 // by 1.
 func (m *Method) configure(msg *message.Message) {
 	items := msg.GetFieldList(fieldNameConfigItem)
-	for _, field := range items {
-		config := strings.Split(field.Value, "=")
+	for _, f := range items {
+		config := strings.Split(f.Value, "=")
 		if config[0] == configItemAcquireS3Region {
 			m.region = config[1]
 		}

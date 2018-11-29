@@ -118,8 +118,7 @@ func (m *Message) unmarshalText(b []byte) error {
 // parse splits a string message by line, and then constructs a Message from a
 // Header and slice of Fields.
 func parse(value string) (Message, error) {
-	trimmed := strings.TrimSpace(value)
-	lines := strings.Split(trimmed, "\n")
+	lines := strings.Split(strings.TrimSpace(value), "\n")
 	headerLine := lines[0]
 	fieldLines := lines[1:]
 
@@ -142,25 +141,23 @@ func parse(value string) (Message, error) {
 // 601 Configuration
 func parseHeader(line string) (*Header, error) {
 	line = strings.TrimSpace(line)
-	headerParts := strings.Split(line, " ")
-	statusString := strings.TrimSpace(headerParts[0])
+	headerTkns := strings.Split(line, " ")
+	statusString := strings.TrimSpace(headerTkns[0])
 	statusCode, err := strconv.Atoi(statusString)
 	if err != nil {
 		return nil, err
 	}
-	descriptionParts := make([]string, len(headerParts[1:]))
-	for idx, descPart := range headerParts[1:] {
-		descriptionParts[idx] = strings.TrimSpace(descPart)
+	descTkns := make([]string, len(headerTkns[1:]))
+	for idx, descTkn := range headerTkns[1:] {
+		descTkns[idx] = strings.TrimSpace(descTkn)
 	}
-	desc := strings.Join(descriptionParts, " ")
-	return &Header{Status: statusCode, Description: desc}, nil
+	return &Header{Status: statusCode, Description: strings.Join(descTkns, " ")}, nil
 }
 
 func parseFields(lines []string) []*Field {
 	fields := []*Field{}
 	for _, l := range lines {
-		f := parseField(l)
-		fields = append(fields, f)
+		fields = append(fields, parseField(l))
 	}
 	return fields
 }
@@ -174,12 +171,13 @@ func parseFields(lines []string) []*Field {
 // Config-Item: Aptitude::Get-Root-Command=sudo:/usr/bin/sudo
 func parseField(line string) *Field {
 	line = strings.TrimSpace(line)
-	fieldParts := strings.Split(line, ":")
-	name := fieldParts[0]
-	valueParts := make([]string, len(fieldParts[1:]))
-	for idx, valuePart := range fieldParts[1:] {
-		valueParts[idx] = strings.TrimSpace(valuePart)
+	tokens := strings.Split(line, ":")
+
+	// the line may have additional colons, so the value needs to be any tokens
+	// after the first joined with a colon
+	valueTkns := make([]string, len(tokens[1:]))
+	for idx, valueTkn := range tokens[1:] {
+		valueTkns[idx] = strings.TrimSpace(valueTkn)
 	}
-	value := strings.Join(valueParts, ":")
-	return &Field{Name: name, Value: value}
+	return &Field{Name: tokens[0], Value: strings.Join(valueTkns, ":")}
 }

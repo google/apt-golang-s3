@@ -242,9 +242,10 @@ func (m *Method) uriAcquire(msg *message.Message) {
 			if reqErr.StatusCode() == 404 {
 				m.outputNotFound(s3Uri)
 				return
-			} else {
-				m.handleError(err)
 			}
+			// if the error is an awserr.RequestFailure, but the status was not 404
+			// handle the error
+			m.handleError(err)
 		} else {
 			m.handleError(err)
 		}

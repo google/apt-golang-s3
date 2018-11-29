@@ -104,7 +104,7 @@ func (f *Field) String() string {
 	return fmt.Sprintf("%s: %s", f.Name, f.Value)
 }
 
-func (m *Message) marshalText() (text []byte, err error) {
+func (m *Message) marshalText() ([]byte, error) {
 	t := m.String()
 	return []byte(t), nil
 }

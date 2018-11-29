@@ -24,26 +24,29 @@ import (
 	"strings"
 )
 
-// Header models the first line of a message specified by the APT method interface.
+// Header models the first line of a message specified by the APT method
+// interface.
 type Header struct {
 	Status      int
 	Description string
 }
 
-// Field models the lines of a message specified by the APT method interface that follow a Header line.
+// Field models the lines of a message specified by the APT method interface
+// that follow a Header line.
 type Field struct {
 	Name  string
 	Value string
 }
 
-// Message models an entore message specified by the APT method interface. It includes a Header
-// and a list of Fields.
+// Message models an entore message specified by the APT method interface. It
+// includes a Header and a list of Fields.
 type Message struct {
 	Header *Header
 	Fields []*Field
 }
 
-// FromBytes takes a byte representation of a Message and unmarshals it into a Message.
+// FromBytes takes a byte representation of a Message and unmarshals it into a
+// Message.
 func FromBytes(b []byte) (*Message, error) {
 	m := &Message{}
 	err := m.unmarshalText(b)
@@ -53,9 +56,9 @@ func FromBytes(b []byte) (*Message, error) {
 	return m, nil
 }
 
-// GetFieldValue returns the Value property of the Field with the given name. If no field is found
-// with the given name, it returns a zero length string. This is useful for Fields that appear only
-// once in a given Message.
+// GetFieldValue returns the Value property of the Field with the given name.
+// If no field is found with the given name, it returns a zero length string.
+// This is useful for Fields that appear only once in a given Message.
 func (m *Message) GetFieldValue(name string) (string, bool) {
 	for _, field := range m.Fields {
 		if field.Name == name {
@@ -65,8 +68,9 @@ func (m *Message) GetFieldValue(name string) (string, bool) {
 	return "", false
 }
 
-// GetFieldList returns a slice of Fields with the given name. This is useful when looking for a
-// collection of fields with a given name from the same Message, e.g. 'Config-Item'.
+// GetFieldList returns a slice of Fields with the given name. This is useful
+// when looking for a collection of fields with a given name from the same
+// Message, e.g. 'Config-Item'.
 func (m *Message) GetFieldList(name string) []*Field {
 	fields := []*Field{}
 	for _, field := range m.Fields {
@@ -77,7 +81,8 @@ func (m *Message) GetFieldList(name string) []*Field {
 	return fields
 }
 
-// String returns a string representation of a Message formatted according to the APT method interface.
+// String returns a string representation of a Message formatted according to
+// the APT method interface.
 func (m *Message) String() string {
 	buffer := &bytes.Buffer{}
 	for _, field := range m.Fields {
@@ -87,12 +92,14 @@ func (m *Message) String() string {
 	return fmt.Sprintf("%s\n%s", m.Header.String(), buffer.String())
 }
 
-// String returns a string representation of a Header formatted according to the APT method interface.
+// String returns a string representation of a Header formatted according to
+// the APT method interface.
 func (h *Header) String() string {
 	return fmt.Sprintf("%d %s", h.Status, h.Description)
 }
 
-// String returns a string representation of a Field formatted according to the APT method interface.
+// String returns a string representation of a Field formatted according to the
+// APT method interface.
 func (f *Field) String() string {
 	return fmt.Sprintf("%s: %s", f.Name, f.Value)
 }
@@ -108,8 +115,8 @@ func (m *Message) unmarshalText(text []byte) error {
 	return err
 }
 
-// parse splits a string message by line, and then constructs a Message
-// from a Header and slice of Fields.
+// parse splits a string message by line, and then constructs a Message from a
+// Header and slice of Fields.
 func parse(value string) (Message, error) {
 	trimmed := strings.TrimSpace(value)
 	lines := strings.Split(trimmed, "\n")

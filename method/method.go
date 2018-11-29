@@ -102,7 +102,8 @@ const (
 	configItemAcquireS3Region = "Acquire::s3::region"
 )
 
-// A Method implements the logic to process incoming apt messages and respond accordingly.
+// A Method implements the logic to process incoming apt messages and respond
+// accordingly.
 type Method struct {
 	region     string
 	msgChan    chan []byte
@@ -111,7 +112,8 @@ type Method struct {
 	stdout     *log.Logger
 }
 
-// New returns a new Method configured to read from os.Stdin and write to os.Stdout.
+// New returns a new Method configured to read from os.Stdin and write to
+// os.Stdout.
 func New() *Method {
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -125,9 +127,9 @@ func New() *Method {
 	return m
 }
 
-// Run flushes the Method's capabilities and then begins reading messages from os.Stdin.
-// Results are written to os.Stdout. The running Method waits for all Messages to be
-// processed before exiting.
+// Run flushes the Method's capabilities and then begins reading messages from
+// os.Stdin. Results are written to os.Stdout. The running Method waits for all
+// Messages to be processed before exiting.
 func (m *Method) Run() {
 	m.flushCapabilities()
 	go m.readInput(os.Stdin)
@@ -140,13 +142,12 @@ func (m *Method) flushCapabilities() {
 	m.stdout.Println(msg)
 }
 
-// readInput reads from the provided io.Reader and flushes each message
-// to the Method's Message channel for processing. It stops reading when
-// io.Reader is empty. Each message increments the Method's sync.WaitGroup
-// by 1. Once all messages have been read from the io.Reader, the Method's
-// sync.WaitGroup is decremented by 1. Each code path that processes a
-// message is responsible for decrementing the WaitGroup when the code
-// path terminates.
+// readInput reads from the provided io.Reader and flushes each message to the
+// Method's Message channel for processing. It stops reading when io.Reader is
+// empty. Each message increments the Method's sync.WaitGroup by 1. Once all
+// messages have been read from the io.Reader, the Method's sync.WaitGroup is
+// decremented by 1. Each code path that processes a message is responsible for
+// decrementing the WaitGroup when the code path terminates.
 func (m *Method) readInput(input io.Reader) {
 	scanner := bufio.NewScanner(input)
 	buffer := &bytes.Buffer{}
@@ -272,9 +273,9 @@ func (m *Method) uriAcquire(msg *message.Message) {
 	m.outputURIDone(s3Uri, numBytes, lastModified, filename)
 }
 
-// s3Client provides an initialized s3iface.S3API based on the contents of the provided
-// url.URL. The access key id and secret access key are assumed to correspond to the
-// Username() and Password() functions on the URL's User.
+// s3Client provides an initialized s3iface.S3API based on the contents of the
+// provided url.URL. The access key id and secret access key are assumed to
+// correspond to the Username() and Password() functions on the URL's User.
 func (m *Method) s3Client(s3Uri *url.URL) s3iface.S3API {
 	awsAccessKeyID := s3Uri.User.Username()
 	awsSecretAccessKey, _ := s3Uri.User.Password()
@@ -288,8 +289,9 @@ func (m *Method) s3Client(s3Uri *url.URL) s3iface.S3API {
 }
 
 // configure loops though the Config-Item fields of a configuration Message and
-// sets the appropriate state on the Method based on the field values. Once the configuration
-// has been applied, the Method's sync.WaitGroup is decremented by 1.
+// sets the appropriate state on the Method based on the field values. Once the
+// configuration has been applied, the Method's sync.WaitGroup is decremented
+// by 1.
 func (m *Method) configure(msg *message.Message) {
 	items := msg.GetFieldList(fieldNameConfigItem)
 	for _, field := range items {
@@ -302,7 +304,8 @@ func (m *Method) configure(msg *message.Message) {
 	m.wg.Done()
 }
 
-// requestStatus constructs a Message that when printed looks like the following example:
+// requestStatus constructs a Message that when printed looks like the
+// following example:
 //
 // 102 Status
 // URI: s3://fake-access-key-id:fake-secret-access-key@s3.amazonaws.com/bucket-name/apt/trusty/riemann-sumd_0.7.2-1_all.deb
@@ -314,7 +317,8 @@ func requestStatus(s3Uri *url.URL, status string) *message.Message {
 	return &message.Message{Header: h, Fields: []*message.Field{uriField, messageField}}
 }
 
-// uriStart constructs a Message that when printed looks like the following example:
+// uriStart constructs a Message that when printed looks like the following
+// example:
 //
 // 200 URI Start
 // URI: s3://fake-access-key-id:fake-secret-access-key@s3.amazonaws.com/bucket-name/apt/trusty/riemann-sumd_0.7.2-1_all.deb
@@ -328,7 +332,8 @@ func (m *Method) uriStart(s3Uri *url.URL, size int64, t time.Time) *message.Mess
 	return &message.Message{Header: h, Fields: []*message.Field{uriField, sizeField, lmField}}
 }
 
-// uriDone constructs a Message that when printed looks like the following example:
+// uriDone constructs a Message that when printed looks like the following
+// example:
 //
 // 201 URI Done
 // URI: s3://fake-access-key-id:fake-secret-access-key@s3.amazonaws.com/bucket-name/apt/trusty/riemann-sumd_0.7.2-1_all.deb
@@ -363,7 +368,8 @@ func (m *Method) uriDone(s3Uri *url.URL, size int64, t time.Time, filename strin
 	return &message.Message{Header: h, Fields: fields}
 }
 
-// notFound constructs a Message that when printed looks like the following example:
+// notFound constructs a Message that when printed looks like the following
+// example:
 //
 // 400 URI Failure
 // Message: The specified key does not exist.
@@ -375,7 +381,8 @@ func notFound(s3Uri *url.URL) *message.Message {
 	return &message.Message{Header: h, Fields: []*message.Field{uriField, messageField}}
 }
 
-// generalLog constructs a Message that when printed looks like the following example:
+// generalLog constructs a Message that when printed looks like the following
+// example:
 //
 // 101 Log
 // Message: Set the s3 region to us-west-1 based on Config-Item Acquire::s3:region.
@@ -385,7 +392,8 @@ func generalLog(status string) *message.Message {
 	return &message.Message{Header: h, Fields: []*message.Field{messageField}}
 }
 
-// generalFailure constructs a Message that when printed looks like the following example:
+// generalFailure constructs a Message that when printed looks like the
+// following example:
 //
 // 401 General Failure
 // Message: Error retrieving ...
@@ -411,16 +419,16 @@ func (m *Method) outputURIStart(s3Uri *url.URL, size int64, lastModified time.Ti
 	m.stdout.Println(msg.String())
 }
 
-// outputURIDone prints a message including the details of the finished URI, and subsequently
-// decrements the Method's sync.WaitGroup by 1.
+// outputURIDone prints a message including the details of the finished URI,
+// and subsequently decrements the Method's sync.WaitGroup by 1.
 func (m *Method) outputURIDone(s3Uri *url.URL, size int64, lastModified time.Time, filename string) {
 	msg := m.uriDone(s3Uri, size, lastModified, filename)
 	m.stdout.Println(msg.String())
 	m.wg.Done()
 }
 
-// outputURIDone prints a message including the details of the URI that could not be found, and subsequently
-// decrements the Method's sync.WaitGroup by 1.
+// outputURIDone prints a message including the details of the URI that could
+// not be found, and subsequently decrements the Method's sync.WaitGroup by 1.
 func (m *Method) outputNotFound(s3Uri *url.URL) {
 	msg := notFound(s3Uri)
 	m.stdout.Println(msg.String())
@@ -432,8 +440,8 @@ func (m *Method) outputGeneralFailure(err error) {
 	m.stdout.Println(msg.String())
 }
 
-// handleError writes the contents of the given error and then exits the program, as
-// specified in the APT method interface documentation.
+// handleError writes the contents of the given error and then exits the
+// program, as specified in the APT method interface documentation.
 func (m *Method) handleError(err error) {
 	if err != nil {
 		m.outputGeneralFailure(err)
@@ -449,8 +457,8 @@ func field(name string, value string) *message.Field {
 	return &message.Field{Name: name, Value: value}
 }
 
-// lastModified returns a Field with the given Time formatted using the RFC1123 specification
-// in GMT, as specified in the APT method interface documentation.
+// lastModified returns a Field with the given Time formatted using the RFC1123
+// specification in GMT, as specified in the APT method interface documentation.
 func (m *Method) lastModified(t time.Time) *message.Field {
 	gmt, err := time.LoadLocation("GMT")
 	m.handleError(err)

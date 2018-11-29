@@ -210,11 +210,10 @@ func (m *Method) handleBytes(b []byte) {
 // has been fully processed before continuing.
 func (m *Method) waitForConfiguration() {
 	for {
-		if m.configured == false {
-			time.Sleep(1 * time.Millisecond)
-		} else {
+		if m.configured {
 			return
 		}
+		time.Sleep(1 * time.Millisecond)
 	}
 }
 

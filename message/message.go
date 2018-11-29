@@ -56,13 +56,13 @@ func FromBytes(b []byte) (*Message, error) {
 // GetFieldValue returns the Value property of the Field with the given name. If no field is found
 // with the given name, it returns a zero length string. This is useful for Fields that appear only
 // once in a given Message.
-func (m *Message) GetFieldValue(name string) string {
+func (m *Message) GetFieldValue(name string) (string, bool) {
 	for _, field := range m.Fields {
 		if field.Name == name {
-			return field.Value
+			return field.Value, true
 		}
 	}
-	return ""
+	return "", false
 }
 
 // GetFieldList returns a slice of Fields with the given name. This is useful when looking for a

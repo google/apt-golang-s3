@@ -24,6 +24,7 @@ import (
 	"crypto/sha1"
 	"crypto/sha256"
 	"crypto/sha512"
+	"errors"
 	"fmt"
 	"hash"
 	"io"
@@ -220,7 +221,10 @@ func (m *Method) waitForConfiguration() {
 // of the provided Message.
 func (m *Method) uriAcquire(msg *message.Message) {
 	m.waitForConfiguration()
-	uri := msg.GetFieldValue(fieldNameURI)
+	uri, hasField := msg.GetFieldValue(fieldNameURI)
+	if !hasField {
+		m.handleError(errors.New("acquire message missing required field: URI"))
+	}
 	s3Uri, err := url.Parse(uri)
 	m.handleError(err)
 	pathParts := strings.Split(s3Uri.Path, "/")
@@ -249,7 +253,10 @@ func (m *Method) uriAcquire(msg *message.Message) {
 	lastModified := *headObjectOutput.LastModified
 	m.outputURIStart(s3Uri, expectedLength, lastModified)
 
-	filename := msg.GetFieldValue(fieldNameFilename)
+	filename, hasField := msg.GetFieldValue(fieldNameFilename)
+	if !hasField {
+		m.handleError(errors.New("acquire message missing required field: Filename"))
+	}
 	file, err := os.Create(filename)
 	m.handleError(err)
 	defer file.Close()

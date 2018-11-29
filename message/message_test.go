@@ -110,17 +110,17 @@ func TestGetFieldValue(t *testing.T) {
 	}
 	m := &Message{Header: h, Fields: f}
 
-	actual := m.GetFieldValue("Foo")
+	actual, _ := m.GetFieldValue("Foo")
 	expected := "bar"
 	if actual != expected {
 		t.Errorf("m.GetFieldValue(\"Foo\") = %s; expected: %s", actual, expected)
 	}
-	actual = m.GetFieldValue("Baz")
+	actual, _ = m.GetFieldValue("Baz")
 	expected = "qux"
 	if actual != expected {
 		t.Errorf("m.GetFieldValue(\"Baz\") = %s; expected: %s", actual, expected)
 	}
-	actual = m.GetFieldValue("Filename")
+	actual, _ = m.GetFieldValue("Filename")
 	expected = "apt-transport.deb"
 	if actual != expected {
 		t.Errorf("m.GetFieldValue(\"Filename\") = %s; expected: %s", actual, expected)
@@ -165,7 +165,7 @@ func TestUnmarshalAcquireMsg(t *testing.T) {
 		t.Errorf("Description = %s; expected %s", description, expectedDesc)
 	}
 
-	value := m.GetFieldValue("Filename")
+	value, _ := m.GetFieldValue("Filename")
 	expectedVal := "/var/cache/apt/archives/partial/python-bernhard_0.2.3-1_all.deb"
 
 	if value != expectedVal {

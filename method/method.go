@@ -217,6 +217,36 @@ func (m *Method) waitForConfiguration() {
 	}
 }
 
+// A objectLocation wraps details about the requested items location in S3
+type objectLocation struct {
+	uri    *url.URL
+	bucket string
+	key    string
+}
+
+func newLocation(value string) (objectLocation, error) {
+	uri, err := url.Parse(value)
+	if err != nil {
+		return objectLocation{}, nil
+	}
+	tokens := strings.Split(uri.Path, "/")
+
+	// splitting "/bucket/this/is/a/path" on "/" produces
+	// ["", "bucket", "this", "is", "a", "path"]
+	// Note the initial empty string
+	if len(tokens) < 3 {
+		return objectLocation{}, errors.New("location missing required number of tokens")
+	}
+
+	// the first non-zero length string is assumed to be the bucket. the rest are
+	// concatenated back together as the path to the object in the bucket
+	return objectLocation{
+		uri:    uri,
+		bucket: tokens[1],
+		key:    strings.Join(tokens[2:], "/"),
+	}, nil
+}
+
 // uriAcquire downloads and stores objects from S3 based on the contents
 // of the provided Message.
 func (m *Method) uriAcquire(msg *message.Message) {
@@ -225,21 +255,19 @@ func (m *Method) uriAcquire(msg *message.Message) {
 	if !hasField {
 		m.handleError(errors.New("acquire message missing required field: URI"))
 	}
-	s3Uri, err := url.Parse(uri)
+	ol, err := newLocation(uri)
 	m.handleError(err)
-	pathParts := strings.Split(s3Uri.Path, "/")
-	bucket := pathParts[1]
-	key := strings.Join(pathParts[2:], "/")
 
-	m.outputRequestStatus(s3Uri, fieldValueConnecting)
-	client := m.s3Client(s3Uri)
+	m.outputRequestStatus(ol.uri, fieldValueConnecting)
 
-	headObjectInput := &s3.HeadObjectInput{Bucket: &bucket, Key: &key}
+	client := m.s3Client(ol.uri)
+
+	headObjectInput := &s3.HeadObjectInput{Bucket: &ol.bucket, Key: &ol.key}
 	headObjectOutput, err := client.HeadObject(headObjectInput)
 	if err != nil {
 		if reqErr, ok := err.(awserr.RequestFailure); ok {
 			if reqErr.StatusCode() == 404 {
-				m.outputNotFound(s3Uri)
+				m.outputNotFound(ol.uri)
 				return
 			}
 			// if the error is an awserr.RequestFailure, but the status was not 404
@@ -252,7 +280,7 @@ func (m *Method) uriAcquire(msg *message.Message) {
 
 	expectedLen := *headObjectOutput.ContentLength
 	lastModified := *headObjectOutput.LastModified
-	m.outputURIStart(s3Uri, expectedLen, lastModified)
+	m.outputURIStart(ol.uri, expectedLen, lastModified)
 
 	filename, hasField := msg.GetFieldValue(fieldNameFilename)
 	if !hasField {
@@ -265,12 +293,12 @@ func (m *Method) uriAcquire(msg *message.Message) {
 	downloader := s3manager.NewDownloaderWithClient(client)
 	numBytes, err := downloader.Download(file,
 		&s3.GetObjectInput{
-			Bucket: aws.String(bucket),
-			Key:    aws.String(key),
+			Bucket: aws.String(ol.bucket),
+			Key:    aws.String(ol.key),
 		})
 	m.handleError(err)
 
-	m.outputURIDone(s3Uri, numBytes, lastModified, filename)
+	m.outputURIDone(ol.uri, numBytes, lastModified, filename)
 }
 
 // s3Client provides an initialized s3iface.S3API based on the contents of the

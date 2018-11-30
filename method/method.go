@@ -278,7 +278,10 @@ func (m *Method) uriAcquire(msg *message.Message) {
 // correspond to the Username() and Password() functions on the URL's User.
 func (m *Method) s3Client(s3Uri *url.URL) s3iface.S3API {
 	awsAccessKeyID := s3Uri.User.Username()
-	awsSecretAccessKey, _ := s3Uri.User.Password()
+	awsSecretAccessKey, hasPass := s3Uri.User.Password()
+	if !hasPass {
+		m.handleError(errors.New("acquire message missing required value: Password"))
+	}
 	creds := credentials.NewStaticCredentials(awsAccessKeyID, awsSecretAccessKey, "")
 	sess := session.Must(session.NewSession())
 

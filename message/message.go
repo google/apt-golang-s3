@@ -140,15 +140,14 @@ func parse(value string) (Message, error) {
 // 201 URI Done
 // 601 Configuration
 func parseHeader(line string) (*Header, error) {
-	line = strings.TrimSpace(line)
-	headerTkns := strings.Split(line, " ")
-	statusString := strings.TrimSpace(headerTkns[0])
-	statusCode, err := strconv.Atoi(statusString)
+	tokens := strings.Split(strings.TrimSpace(line), " ")
+	status := strings.TrimSpace(tokens[0])
+	statusCode, err := strconv.Atoi(status)
 	if err != nil {
 		return nil, err
 	}
-	descTkns := make([]string, len(headerTkns[1:]))
-	for idx, descTkn := range headerTkns[1:] {
+	descTkns := make([]string, len(tokens[1:]))
+	for idx, descTkn := range tokens[1:] {
 		descTkns[idx] = strings.TrimSpace(descTkn)
 	}
 	return &Header{Status: statusCode, Description: strings.Join(descTkns, " ")}, nil
@@ -170,8 +169,7 @@ func parseFields(lines []string) []*Field {
 // URI:s3://my-s3-repository/project-a/dists/trusty/main/binary-amd64/Packages
 // Config-Item: Aptitude::Get-Root-Command=sudo:/usr/bin/sudo
 func parseField(line string) *Field {
-	line = strings.TrimSpace(line)
-	tokens := strings.Split(line, ":")
+	tokens := strings.Split(strings.TrimSpace(line), ":")
 
 	// the line may have additional colons, so the value needs to be any tokens
 	// after the first joined with a colon

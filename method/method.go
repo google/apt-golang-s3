@@ -158,9 +158,9 @@ func (m *Method) readInput(input io.Reader) {
 			buffer.WriteString(line)
 			trimmed := strings.TrimRight(line, "\n")
 
-			// if the trimmed line is empty and the buffer has some content
-			// the message is assumed to be complete
-			// dispatch it
+			// Messages are terminated with a blank line. If a line with no content
+			// comes in and the buffer already has some content, it's assuming that
+			// the buffer currently contains a complete message ready to be processed.
 			if len(trimmed) == 0 && buffer.Len() > 3 {
 				m.msgChan <- buffer.Bytes()
 				m.wg.Add(1)

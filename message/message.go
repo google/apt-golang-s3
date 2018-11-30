@@ -49,12 +49,11 @@ type Message struct {
 // FromBytes takes a byte representation of a Message and unmarshals it into a
 // Message.
 func FromBytes(b []byte) (*Message, error) {
-	m := &Message{}
-	err := m.unmarshalText(b)
+	m, err := parse(string(b))
 	if err != nil {
 		return nil, err
 	}
-	return m, nil
+	return &m, nil
 }
 
 // GetFieldValue returns the Value property of the Field with the given name.
@@ -103,17 +102,6 @@ func (h *Header) String() string {
 // APT method interface.
 func (f *Field) String() string {
 	return fmt.Sprintf("%s: %s", f.Name, f.Value)
-}
-
-func (m *Message) marshalText() ([]byte, error) {
-	t := m.String()
-	return []byte(t), nil
-}
-
-func (m *Message) unmarshalText(b []byte) error {
-	var err error
-	*m, err = parse(string(b))
-	return err
 }
 
 // parse splits a string message by line, and then constructs a Message from a

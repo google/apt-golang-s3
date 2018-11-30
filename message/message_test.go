@@ -65,28 +65,11 @@ func TestMessageString(t *testing.T) {
 	}
 }
 
-func TestMarshalUnmarshallFakeMsg(t *testing.T) {
-	h := &Header{Status: 700, Description: "Fake Description"}
-	f := []*Field{
-		&Field{Name: "Foo", Value: "bar"},
-		&Field{Name: "Baz", Value: "false"},
-		&Field{Name: "Filename", Value: "apt-transport.deb"},
-	}
-	m := &Message{Header: h, Fields: f}
-	bytes, err := m.marshalText()
+func TestParseConfigurationMsg(t *testing.T) {
+	m, err := FromBytes([]byte(configMsg))
 	if err != nil {
-		t.Error(err)
+		t.Errorf("Failed to parse %s into a message", configMsg)
 	}
-	newMessage := &Message{}
-	newMessage.unmarshalText(bytes)
-	if newMessage.Header.Description != "Fake Description" {
-		t.Errorf("Description = %s; expected %s", newMessage.Header.Description, "Fake Description")
-	}
-}
-
-func TestUnmarshalConfigurationMsg(t *testing.T) {
-	m := &Message{}
-	m.unmarshalText([]byte(configMsg))
 
 	expectedCount := 12
 	count := len(m.Fields)
@@ -143,9 +126,11 @@ func TestGetFieldList(t *testing.T) {
 	}
 }
 
-func TestUnmarshalAcquireMsg(t *testing.T) {
-	m := &Message{}
-	m.unmarshalText([]byte(acqMsg))
+func TestParseAcquireMsg(t *testing.T) {
+	m, err := FromBytes([]byte(acqMsg))
+	if err != nil {
+		t.Errorf("Failed to parse %s into a message", acqMsg)
+	}
 
 	expectedCount := 2
 	count := len(m.Fields)
@@ -173,9 +158,11 @@ func TestUnmarshalAcquireMsg(t *testing.T) {
 	}
 }
 
-func TestUnmarshalFieldsWithMissingSpaces(t *testing.T) {
-	m := &Message{}
-	m.unmarshalText([]byte(acqMsgNoSpaces))
+func TestParseFieldsWithMissingSpaces(t *testing.T) {
+	m, err := FromBytes([]byte(acqMsgNoSpaces))
+	if err != nil {
+		t.Errorf("Failed to parse %s into a message", acqMsgNoSpaces)
+	}
 
 	count := len(m.Fields)
 	expected := 4

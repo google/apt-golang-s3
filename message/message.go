@@ -19,6 +19,7 @@ package message
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -119,6 +120,9 @@ func (m *Message) unmarshalText(b []byte) error {
 // Header and slice of Fields.
 func parse(value string) (Message, error) {
 	lines := strings.Split(strings.TrimSpace(value), "\n")
+	if len(lines) < 2 {
+		return Message{}, errors.New("message missing required number of lines")
+	}
 	headerLine := lines[0]
 	fieldLines := lines[1:]
 

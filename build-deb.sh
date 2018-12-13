@@ -34,6 +34,6 @@ fpm -s dir \
   --version $VERSION \
   --maintainer fabric-infrastructure-team \
   --replaces apt-transport-s3 \
-  --url https://github.com/crashlytics/apt-golang-s3 \
+  --url https://github.com/google/apt-golang-s3 \
   --vendor "Google Fabric" \
   ./$PACKAGE_NAME=/usr/lib/apt/methods/s3 ${@:3}

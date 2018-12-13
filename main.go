@@ -18,9 +18,29 @@
 package main
 
 import (
+	"flag"
+	"fmt"
+	"os"
+	"runtime"
+
 	"github.com/crashlytics/apt-golang-s3/method"
 )
 
+const (
+	version = "1.0.0"
+)
+
+var (
+	showVersion = flag.Bool("version", false, "Print version and exit")
+)
+
 func main() {
+	flag.Parse()
+
+	if *showVersion {
+		fmt.Printf("apt-golang-s3 %s (Go version: %s)\n", version, runtime.Version())
+		os.Exit(0)
+	}
+
 	method.New().Run()
 }

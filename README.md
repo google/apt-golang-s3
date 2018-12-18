@@ -2,6 +2,9 @@
 
 _An s3 transport method for the `apt` package management system_
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/google/apt-golang-s3)](https://goreportcard.com/report/github.com/google/apt-golang-s3)
+[![GoDoc](https://godoc.org/github.com/google/apt-golang-s3?status.svg)](https://godoc.org/github.com/google/apt-golang-s3)
+
 The apt-golang-s3 project provides support for hosting private
 [apt](https://en.wikipedia.org/wiki/APT_(Debian)) repositories in
 [Amazon S3](https://aws.amazon.com/s3/). This is useful if you have private

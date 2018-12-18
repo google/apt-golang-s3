@@ -2,6 +2,7 @@
 
 _An s3 transport method for the `apt` package management system_
 
+[![Build Status](https://travis-ci.org/google/apt-golang-s3.svg?branch=master)](https://travis-ci.org/google/apt-golang-s3)
 [![Go Report Card](https://goreportcard.com/badge/github.com/google/apt-golang-s3)](https://goreportcard.com/report/github.com/google/apt-golang-s3)
 [![GoDoc](https://godoc.org/github.com/google/apt-golang-s3?status.svg)](https://godoc.org/github.com/google/apt-golang-s3)
 

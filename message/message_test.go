@@ -53,9 +53,9 @@ Index-File:true
 func TestMessageString(t *testing.T) {
 	h := &Header{Status: 700, Description: "Fake Description"}
 	f := []*Field{
-		&Field{Name: "Foo", Value: "bar"},
-		&Field{Name: "Baz", Value: "false"},
-		&Field{Name: "Filename", Value: "apt-transport.deb"},
+		{Name: "Foo", Value: "bar"},
+		{Name: "Baz", Value: "false"},
+		{Name: "Filename", Value: "apt-transport.deb"},
 	}
 	m := &Message{Header: h, Fields: f}
 
@@ -87,9 +87,9 @@ func TestParseConfigurationMsg(t *testing.T) {
 func TestGetFieldValue(t *testing.T) {
 	h := &Header{Status: 700, Description: "Fake Description"}
 	f := []*Field{
-		&Field{Name: "Foo", Value: "bar"},
-		&Field{Name: "Baz", Value: "qux"},
-		&Field{Name: "Filename", Value: "apt-transport.deb"},
+		{Name: "Foo", Value: "bar"},
+		{Name: "Baz", Value: "qux"},
+		{Name: "Filename", Value: "apt-transport.deb"},
 	}
 	m := &Message{Header: h, Fields: f}
 
@@ -113,9 +113,9 @@ func TestGetFieldValue(t *testing.T) {
 func TestGetFieldList(t *testing.T) {
 	h := &Header{Status: 700, Description: "Fake Description"}
 	f := []*Field{
-		&Field{Name: "Config-Item", Value: "bar"},
-		&Field{Name: "Config-Item", Value: "qux"},
-		&Field{Name: "Filename", Value: "apt-transport.deb"},
+		{Name: "Config-Item", Value: "bar"},
+		{Name: "Config-Item", Value: "qux"},
+		{Name: "Filename", Value: "apt-transport.deb"},
 	}
 	m := &Message{Header: h, Fields: f}
 

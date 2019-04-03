@@ -310,7 +310,6 @@ func (m *Method) s3Client(s3Uri *url.URL) s3iface.S3API {
 	var config = &aws.Config{
 		Region: aws.String(m.region),
 	}
-	var creds *credentials.Credentials
 	if awsAccessKeyID != "" {
 		if !hasPass {
 			m.handleError(errors.New("acquire message missing required value: Password"))

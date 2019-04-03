@@ -307,16 +307,19 @@ func (m *Method) uriAcquire(msg *message.Message) {
 func (m *Method) s3Client(s3Uri *url.URL) s3iface.S3API {
 	awsAccessKeyID := s3Uri.User.Username()
 	awsSecretAccessKey, hasPass := s3Uri.User.Password()
-	if !hasPass {
-		m.handleError(errors.New("acquire message missing required value: Password"))
+	var config = &aws.Config{
+		Region: aws.String(m.region),
 	}
-	creds := credentials.NewStaticCredentials(awsAccessKeyID, awsSecretAccessKey, "")
+	var creds *credentials.Credentials
+	if awsAccessKeyID != "" {
+		if !hasPass {
+			m.handleError(errors.New("acquire message missing required value: Password"))
+		}
+		creds = credentials.NewStaticCredentials(awsAccessKeyID, awsSecretAccessKey, "")
+		config.Credentials = creds
+	}
 	sess := session.Must(session.NewSession())
-
-	return s3.New(sess, &aws.Config{
-		Region:      aws.String(m.region),
-		Credentials: creds,
-	})
+	return s3.New(sess, config)
 }
 
 // configure loops though the Config-Item fields of a configuration Message and

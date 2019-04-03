@@ -315,8 +315,7 @@ func (m *Method) s3Client(s3Uri *url.URL) s3iface.S3API {
 		if !hasPass {
 			m.handleError(errors.New("acquire message missing required value: Password"))
 		}
-		creds = credentials.NewStaticCredentials(awsAccessKeyID, awsSecretAccessKey, "")
-		config.Credentials = creds
+		config.Credentials = credentials.NewStaticCredentials(awsAccessKeyID, awsSecretAccessKey, "")
 	}
 	sess := session.Must(session.NewSession())
 	return s3.New(sess, config)

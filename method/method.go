@@ -307,7 +307,7 @@ func (m *Method) uriAcquire(msg *message.Message) {
 func (m *Method) s3Client(s3Uri *url.URL) s3iface.S3API {
 	awsAccessKeyID := s3Uri.User.Username()
 	awsSecretAccessKey, hasPass := s3Uri.User.Password()
-	var config = &aws.Config{
+	config := &aws.Config{
 		Region: aws.String(m.region),
 	}
 	if awsAccessKeyID != "" {

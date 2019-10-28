@@ -47,7 +47,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 
-	"github.com/retailnext/apt-golang-s3/message"
+	"github.com/google/apt-golang-s3/message"
 )
 
 const (

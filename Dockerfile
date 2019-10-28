@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM golang:1.11
+FROM golang:1.13
 
 ENV BUILD_DIR /app
 
@@ -24,4 +24,3 @@ RUN apt-get install ruby-dev -y
 RUN gem install fpm --no-ri --no-rdoc
 
 COPY . $BUILD_DIR/
-RUN go get

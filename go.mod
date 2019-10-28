@@ -1,4 +1,4 @@
-module github.com/retailnext/apt-golang-s3
+module github.com/google/apt-golang-s3
 
 require (
 	github.com/aws/aws-sdk-go v1.25.13

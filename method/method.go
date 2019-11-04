@@ -40,7 +40,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -125,11 +124,6 @@ func New() *Method {
 		configured: false,
 		wg:         &wg,
 		stdout:     log.New(os.Stdout, "", 0),
-	}
-	sess, _ := session.NewSession(aws.NewConfig())
-	meta := ec2metadata.New(sess)
-	if region, err := meta.Region(); err == nil {
-		m.region = region
 	}
 
 	return m

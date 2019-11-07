@@ -100,6 +100,7 @@ const (
 
 const (
 	configItemAcquireS3Region = "Acquire::s3::region"
+	s3Hostname = "s3.amazonaws.com"
 )
 
 // A Method implements the logic to process incoming apt messages and respond
@@ -124,6 +125,7 @@ func New() *Method {
 		wg:         &wg,
 		stdout:     log.New(os.Stdout, "", 0),
 	}
+
 	return m
 }
 
@@ -229,21 +231,37 @@ func newLocation(value string) (objectLocation, error) {
 	if err != nil {
 		return objectLocation{}, nil
 	}
-	tokens := strings.Split(uri.Path, "/")
+	if uri.Host == s3Hostname {
+		tokens := strings.Split(uri.Path, "/")
 
-	// splitting "/bucket/this/is/a/path" on "/" produces
-	// ["", "bucket", "this", "is", "a", "path"]
-	// Note the initial empty string
-	if len(tokens) < 3 {
-		return objectLocation{}, errors.New("location missing required number of tokens")
+		// splitting "/bucket/this/is/a/path" on "/" produces
+		// ["", "bucket", "this", "is", "a", "path"]
+		// Note the initial empty string
+		if len(tokens) < 3 {
+			return objectLocation{}, errors.New("location missing required number of tokens")
+		}
+
+		// the first non-zero length string is assumed to be the bucket. the rest are
+		// concatenated back together as the path to the object in the bucket
+		return objectLocation{
+			uri:    uri,
+			bucket: tokens[1],
+			key:    strings.Join(tokens[2:], "/"),
+		}, nil
 	}
 
-	// the first non-zero length string is assumed to be the bucket. the rest are
-	// concatenated back together as the path to the object in the bucket
-	return objectLocation{
+	if strings.HasSuffix(uri.Host, s3Hostname) {
+		return objectLocation{
+			uri:    uri,
+			bucket: strings.TrimSuffix(uri.Host, "."+s3Hostname),
+			key:    uri.Path[1:],
+		}, nil
+	}
+
+	return  objectLocation{
 		uri:    uri,
-		bucket: tokens[1],
-		key:    strings.Join(tokens[2:], "/"),
+		bucket: uri.Host,
+		key:    uri.Path[1:],
 	}, nil
 }
 
@@ -260,7 +278,7 @@ func (m *Method) uriAcquire(msg *message.Message) {
 
 	m.outputRequestStatus(ol.uri, fieldValueConnecting)
 
-	client := m.s3Client(ol.uri)
+	client := m.s3Client(ol.uri.User)
 
 	headObjectInput := &s3.HeadObjectInput{Bucket: &ol.bucket, Key: &ol.key}
 	headObjectOutput, err := client.HeadObject(headObjectInput)
@@ -304,9 +322,9 @@ func (m *Method) uriAcquire(msg *message.Message) {
 // s3Client provides an initialized s3iface.S3API based on the contents of the
 // provided url.URL. The access key id and secret access key are assumed to
 // correspond to the Username() and Password() functions on the URL's User.
-func (m *Method) s3Client(s3Uri *url.URL) s3iface.S3API {
-	awsAccessKeyID := s3Uri.User.Username()
-	awsSecretAccessKey, hasPass := s3Uri.User.Password()
+func (m *Method) s3Client(user *url.Userinfo) s3iface.S3API {
+	awsAccessKeyID := user.Username()
+	awsSecretAccessKey, hasPass := user.Password()
 	config := &aws.Config{
 		Region: aws.String(m.region),
 	}

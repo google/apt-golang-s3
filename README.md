@@ -98,8 +98,16 @@ deb s3://aws-access-key-id:aws-secret-access-key@s3.amazonaws.com/my-private-rep
 The current default AWS region is set to `us-east-1`, but can be overridden by
 adding an option in your apt configuration, e.g.
 
-```
+```plain
 echo "Acquire::s3::region us-east-1;" > /etc/apt/apt.conf.d/s3
+```
+
+Alternatively, you may specify an IAM role to assume before connecting to S3.
+The role will be assumed using the default credential chain; this option is
+mutually exclusive with static credentials in the S3 URL.
+
+```plain
+echo "Acquire::s3::role arn:aws:iam::123456789012:role/s3-apt-reader;" > /etc/apt/apt.conf.d/s3
 ```
 
 Additional configuration options may be added in the future.

@@ -40,6 +40,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -100,17 +101,18 @@ const (
 
 const (
 	configItemAcquireS3Region = "Acquire::s3::region"
-	s3Hostname = "s3.amazonaws.com"
+	configItemAcquireS3Role   = "Acquire::s3::role"
+	s3Hostname                = "s3.amazonaws.com"
 )
 
 // A Method implements the logic to process incoming apt messages and respond
 // accordingly.
 type Method struct {
-	region     string
-	msgChan    chan []byte
-	configured bool
-	wg         *sync.WaitGroup
-	stdout     *log.Logger
+	region, roleARN string
+	msgChan         chan []byte
+	configured      bool
+	wg              *sync.WaitGroup
+	stdout          *log.Logger
 }
 
 // New returns a new Method configured to read from os.Stdin and write to
@@ -258,7 +260,7 @@ func newLocation(value string) (objectLocation, error) {
 		}, nil
 	}
 
-	return  objectLocation{
+	return objectLocation{
 		uri:    uri,
 		bucket: uri.Host,
 		key:    uri.Path[1:],
@@ -323,18 +325,21 @@ func (m *Method) uriAcquire(msg *message.Message) {
 // provided url.URL. The access key id and secret access key are assumed to
 // correspond to the Username() and Password() functions on the URL's User.
 func (m *Method) s3Client(user *url.Userinfo) s3iface.S3API {
-	awsAccessKeyID := user.Username()
-	awsSecretAccessKey, hasPass := user.Password()
+	sess := session.Must(session.NewSession())
 	config := &aws.Config{
 		Region: aws.String(m.region),
 	}
-	if awsAccessKeyID != "" {
-		if !hasPass {
+	if accessKeyID := user.Username(); accessKeyID != "" {
+		// Use explicity-specified static credentials to access S3
+		if secretAccessKey, ok := user.Password(); ok {
+			config.Credentials = credentials.NewStaticCredentials(accessKeyID, secretAccessKey, "")
+		} else {
 			m.handleError(errors.New("acquire message missing required value: Password"))
 		}
-		config.Credentials = credentials.NewStaticCredentials(awsAccessKeyID, awsSecretAccessKey, "")
+	} else if m.roleARN != "" {
+		// Use default credential chain to assume specified role
+		config.Credentials = stscreds.NewCredentials(sess, m.roleARN)
 	}
-	sess := session.Must(session.NewSession())
 	return s3.New(sess, config)
 }
 
@@ -346,8 +351,11 @@ func (m *Method) configure(msg *message.Message) {
 	items := msg.GetFieldList(fieldNameConfigItem)
 	for _, f := range items {
 		config := strings.Split(f.Value, "=")
-		if config[0] == configItemAcquireS3Region {
+		switch config[0] {
+		case configItemAcquireS3Region:
 			m.region = config[1]
+		case configItemAcquireS3Role:
+			m.roleARN = config[1]
 		}
 	}
 	m.configured = true

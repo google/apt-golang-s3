@@ -231,7 +231,7 @@ type objectLocation struct {
 func newLocation(value string) (objectLocation, error) {
 	uri, err := url.Parse(value)
 	if err != nil {
-		return objectLocation{}, nil
+		return objectLocation{}, err
 	}
 	if uri.Host == s3Hostname {
 		tokens := strings.Split(uri.Path, "/")

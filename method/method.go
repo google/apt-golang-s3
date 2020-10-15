@@ -102,7 +102,6 @@ const (
 const (
 	configItemAcquireS3Region = "Acquire::s3::region"
 	configItemAcquireS3Role   = "Acquire::s3::role"
-	s3Hostname                = "s3.amazonaws.com"
 )
 
 // A Method implements the logic to process incoming apt messages and respond
@@ -228,7 +227,7 @@ type objectLocation struct {
 	key    string
 }
 
-func newLocation(value string) (objectLocation, error) {
+func newLocation(value, s3Hostname string) (objectLocation, error) {
 	uri, err := url.Parse(value)
 	if err != nil {
 		return objectLocation{}, err
@@ -271,11 +270,18 @@ func newLocation(value string) (objectLocation, error) {
 // of the provided Message.
 func (m *Method) uriAcquire(msg *message.Message) {
 	m.waitForConfiguration()
+
 	uri, hasField := msg.GetFieldValue(fieldNameURI)
 	if !hasField {
 		m.handleError(errors.New("acquire message missing required field: URI"))
 	}
-	ol, err := newLocation(uri)
+
+	s3URL, err := s3EndpointURL(m.region)
+	if err != nil {
+		m.handleError(fmt.Errorf("resolving S3 endpoint for region %s: %w", m.region, err))
+	}
+
+	ol, err := newLocation(uri, s3URL.Hostname())
 	m.handleError(err)
 
 	m.outputRequestStatus(ol.uri, fieldValueConnecting)
@@ -325,9 +331,12 @@ func (m *Method) uriAcquire(msg *message.Message) {
 // provided url.URL. The access key id and secret access key are assumed to
 // correspond to the Username() and Password() functions on the URL's User.
 func (m *Method) s3Client(user *url.Userinfo) s3iface.S3API {
-	sess := session.Must(session.NewSession())
 	config := &aws.Config{
 		Region: aws.String(m.region),
+	}
+	sess, err := session.NewSession(config)
+	if err != nil {
+		m.handleError(fmt.Errorf("creating AWS session: %w", err))
 	}
 	if accessKeyID := user.Username(); accessKeyID != "" {
 		// Use explicity-specified static credentials to access S3

@@ -228,7 +228,7 @@ type objectLocation struct {
 }
 
 func newLocation(value, s3Hostname string) (objectLocation, error) {
-	uri, err := url.Parse(value)
+	uri, err := url.Parse(preProcessURL(value))
 	if err != nil {
 		return objectLocation{}, err
 	}
@@ -264,6 +264,30 @@ func newLocation(value, s3Hostname string) (objectLocation, error) {
 		bucket: uri.Host,
 		key:    uri.Path[1:],
 	}, nil
+}
+
+// replace any forward slashes in access key and secret
+func preProcessURL(url string) string {
+	idx := strings.Index(url, "@")
+	if idx < 0 {
+		return url
+	}
+	sub := url[0:idx] // drop everything after the @
+	sub = sub[5:]     // drop the s3://
+
+	key := ""
+	secret := ""
+	tkns := strings.Split(sub, ":")
+	if len(tkns) == 2 {
+		key = tkns[0]
+		secret = tkns[1]
+	}
+	processedKey := strings.ReplaceAll(key, "/", "%2F")
+	processedSecret := strings.ReplaceAll(secret, "/", "%2F")
+
+	p := strings.ReplaceAll(url, key, processedKey)
+	p = strings.ReplaceAll(p, secret, processedSecret)
+	return p
 }
 
 // uriAcquire downloads and stores objects from S3 based on the contents

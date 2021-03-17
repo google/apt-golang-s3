@@ -101,3 +101,53 @@ func TestSettingRegion(t *testing.T) {
 		t.Errorf("method.region = %s; expected %s", method.region, expected)
 	}
 }
+
+type locTest struct {
+	url             string
+	accessKey       string
+	accessKeySecret string
+}
+
+var locTests = []locTest{
+	{
+		"s3://fake-access-key-id:fake-access-key-secret@s3.amazonaws.com/apt-repo-bucket/apt/generic/python-bernhard_0.2.3-1_all.deb",
+		"fake-access-key-id",
+		"fake-access-key-secret",
+	},
+	{
+		"s3://fake-ac/cess-key-id:fake-ac/cess-key-secret@s3.amazonaws.com/apt-repo-bucket/apt/generic/python-bernhard_0.2.3-1_all.deb",
+		"fake-ac/cess-key-id",
+		"fake-ac/cess-key-secret", // secret contains a forward slash
+	},
+	{
+		"s3://fake-ac%2Fcess-key-id:fake-ac%2Fcess-key-secret@s3.amazonaws.com/apt-repo-bucket/apt/generic/python-bernhard_0.2.3-1_all.deb",
+		"fake-ac/cess-key-id",     // access key contains a forward slash that was encoded as %2F in the original url
+		"fake-ac/cess-key-secret", // secret contains a forward slash that was encoded as %2F in the original url
+	},
+	{
+		"s3://fake-access-key-id:@s3.amazonaws.com/apt-repo-bucket/apt/generic/python-bernhard_0.2.3-1_all.deb",
+		"fake-access-key-id",
+		"", // secret is blank
+	},
+	{
+		"s3://:fake-access-key-secret@s3.amazonaws.com/apt-repo-bucket/apt/generic/python-bernhard_0.2.3-1_all.deb",
+		"", // access key is blank
+		"fake-access-key-secret",
+	},
+}
+
+func TestCreateLocation(t *testing.T) {
+	for _, lt := range locTests {
+		l, err := newLocation(lt.url, "s3.amazonaws.com")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if l.uri.User.Username() != lt.accessKey {
+			t.Errorf("unexpected accessKey: got %s, want %s", l.uri.User.Username(), lt.accessKey)
+		}
+		pass, _ := l.uri.User.Password()
+		if pass != lt.accessKeySecret {
+			t.Errorf("unexpected accessKeySecret: got %s, want %s", pass, lt.accessKeySecret)
+		}
+	}
+}

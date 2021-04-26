@@ -363,7 +363,7 @@ func (m *Method) s3Client(user *url.Userinfo) s3iface.S3API {
 		m.handleError(fmt.Errorf("creating AWS session: %w", err))
 	}
 	if accessKeyID := user.Username(); accessKeyID != "" {
-		// Use explicity-specified static credentials to access S3
+		// Use explicitly specified static credentials to access S3
 		if secretAccessKey, ok := user.Password(); ok {
 			config.Credentials = credentials.NewStaticCredentials(accessKeyID, secretAccessKey, "")
 		} else {

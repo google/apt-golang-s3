@@ -167,8 +167,8 @@ func parseFields(lines []string) []*Field {
 func parseField(line string) *Field {
 	tokens := strings.Split(strings.TrimSpace(line), ":")
 
-	// the line may have additional colons, so the value needs to be any tokens
-	// after the first joined with a colon
+	// The line may have additional colons, so the value needs to be any tokens
+	// after the first joined with a colon.
 	valueTkns := make([]string, len(tokens[1:]))
 	for idx, valueTkn := range tokens[1:] {
 		valueTkns[idx] = strings.TrimSpace(valueTkn)

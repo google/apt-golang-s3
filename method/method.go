@@ -226,7 +226,7 @@ func (m *Method) waitForConfiguration() {
 	}
 }
 
-// A objectLocation wraps details about the requested items location in S3
+// A objectLocation wraps details about the requested items location in S3.
 type objectLocation struct {
 	uri    *url.URL
 	bucket string
@@ -241,15 +241,15 @@ func newLocation(value, s3Hostname string) (objectLocation, error) {
 	if uri.Host == s3Hostname {
 		tokens := strings.Split(uri.Path, "/")
 
-		// splitting "/bucket/this/is/a/path" on "/" produces
+		// Splitting "/bucket/this/is/a/path" on "/" produces
 		// ["", "bucket", "this", "is", "a", "path"]
 		// Note the initial empty string
 		if len(tokens) < 3 {
 			return objectLocation{}, errLocMissingRequiredTokens
 		}
 
-		// the first non-zero length string is assumed to be the bucket. the rest are
-		// concatenated back together as the path to the object in the bucket
+		// The first non-zero length string is assumed to be the bucket. The rest are
+		// concatenated back together as the path to the object in the bucket.
 		return objectLocation{
 			uri:    uri,
 			bucket: tokens[1],
@@ -272,7 +272,7 @@ func newLocation(value, s3Hostname string) (objectLocation, error) {
 	}, nil
 }
 
-// replace any forward slashes in access key and secret
+// Replace any forward slashes in access key and secret.
 func preProcessURL(url string) string {
 	idx := strings.Index(url, "@")
 	if idx < 0 {

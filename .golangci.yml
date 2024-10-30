@@ -45,6 +45,7 @@ linters:
     - lll
     - misspell
     - mnd
+    - perfsprint
     - staticcheck
     - stylecheck
     - unused

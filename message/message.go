@@ -127,6 +127,7 @@ func parse(value string) (Message, error) {
 		return Message{}, err
 	}
 	fields := parseFields(fieldLines)
+
 	return Message{Header: header, Fields: fields}, nil
 }
 
@@ -150,6 +151,7 @@ func parseHeader(line string) (*Header, error) {
 	for idx, descTkn := range tokens[1:] {
 		descTkns[idx] = strings.TrimSpace(descTkn)
 	}
+
 	return &Header{Status: statusCode, Description: strings.Join(descTkns, " ")}, nil
 }
 

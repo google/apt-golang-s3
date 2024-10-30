@@ -27,7 +27,7 @@ Pipeline: true
 Single-Instance: yes
 `
 
-	// The trailing blank line is intentional
+	// The trailing blank line is intentional.
 	acqMsg = `600 URI Acquire
 URI: s3://fake-access-key-id:fake-access-key-secret@s3.amazonaws.com/apt-repo-bucket/apt/generic/python-bernhard_0.2.3-1_all.deb
 Filename: /tmp/python-bernhard_0.2.3-1_all.deb
@@ -38,7 +38,7 @@ Filename: /tmp/riemann-sumd_0.7.2-1_all.deb
 
 `
 
-	// The trailing blank line is intentional
+	// The trailing blank line is intentional.
 	configMsg = `601 Configuration
 Config-Item: Dir::Log=var/log/apt
 Config-Item: Dir::Log::Terminal=term.log

@@ -28,6 +28,8 @@ linters:
     - gci
     - goconst
     - gocritic
+    - gocyclo
+    - godot
     - gofmt
     - goheader
     - gosec
@@ -92,6 +94,33 @@ linters-settings:
     # See https://github.com/kisielk/errcheck#excluding-functions for details.
     exclude-functions:
       - (*bytes.Buffer).WriteString # WriteString is documented as always returning a nil error
+
+  gocyclo:
+    # Minimal code complexity to report.
+    # Default: 30
+    min-complexity: 10
+
+  godot:
+    # Comments to be checked: `declarations`, `toplevel`, or `all`.
+    # Default: declarations
+    scope: toplevel
+    # List of regexps for excluding particular comment lines from check.
+    # Default: []
+    exclude:
+      # Exclude todo and fixme comments.
+      - "^fixme:"
+      - "^todo:"
+      - "601"
+      - "Config-Item:"
+      - "Message:"
+      - "Last-Modified:"
+      - "URI:"
+    # Check that each sentence ends with a period.
+    # Default: true
+    period: true
+    # Check that each sentence starts with a capital letter.
+    # Default: false
+    capital: true
 
   gci:
     sections:

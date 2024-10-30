@@ -12,6 +12,7 @@ linters:
     - gofmt
     - goheader
     - gosec
+    - gosimple
     - govet
     - lll
     - staticcheck
@@ -112,6 +113,11 @@ linters-settings:
       - G401 # Use of weak cryptographic primitive
       - G501 # Import blocklist: crypto/md5
       - G505 # Import blocklist: crypto/sha1
+
+  gosimple:
+    # Sxxxx checks in https://staticcheck.io/docs/configuration/options/#checks
+    # Default: ["*"]
+    checks: ["all"]
 
   lll:
     # Max line length, lines longer will be reported.

@@ -25,6 +25,7 @@ linters:
     - errname
     - errorlint
     - exhaustive
+    - forbidigo
     - gci
     - goconst
     - gocritic

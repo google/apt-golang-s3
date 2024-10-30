@@ -19,7 +19,7 @@ package main
 
 import (
 	"flag"
-	"fmt"
+	"log"
 	"os"
 	"runtime"
 
@@ -37,10 +37,11 @@ var (
 func main() {
 	flag.Parse()
 
+	logger := log.New(os.Stdout, "", 0)
 	if *showVersion {
-		fmt.Printf("apt-golang-s3 %s (Go version: %s)\n", version, runtime.Version())
+		logger.Printf("apt-golang-s3 %s (Go version: %s)\n", version, runtime.Version())
 		os.Exit(0)
 	}
 
-	method.New().Run()
+	method.New(logger).Run()
 }

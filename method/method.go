@@ -127,19 +127,17 @@ type Method struct {
 }
 
 // New returns a new Method configured to read from os.Stdin and write to
-// os.Stdout.
-func New() *Method {
+// the given *log.Logger.
+func New(logger *log.Logger) *Method {
 	var wg sync.WaitGroup
 	wg.Add(1)
-	m := &Method{
+	return &Method{
 		region:     endpoints.UsEast1RegionID,
 		msgChan:    make(chan []byte),
 		configured: false,
 		wg:         &wg,
-		stdout:     log.New(os.Stdout, "", 0),
+		stdout:     logger,
 	}
-
-	return m
 }
 
 // Run flushes the Method's capabilities and then begins reading messages from

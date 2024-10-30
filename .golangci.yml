@@ -10,6 +10,7 @@ linters:
     - gci
     - gofmt
     - goheader
+    - gosec
 
 # All available settings of specific linters.
 linters-settings:
@@ -79,3 +80,12 @@ linters-settings:
       WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
       See the License for the specific language governing permissions and
       limitations under the License.
+
+  gosec:
+    # To specify a set of rules to explicitly exclude.
+    # Available rules: https://github.com/securego/gosec#available-rules
+    # Default: []
+    excludes:
+      - G401 # Use of weak cryptographic primitive
+      - G501 # Import blocklist: crypto/md5
+      - G505 # Import blocklist: crypto/sha1

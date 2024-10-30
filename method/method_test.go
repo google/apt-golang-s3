@@ -15,6 +15,7 @@
 package method
 
 import (
+	"crypto/sha256"
 	"log"
 	"os"
 	"strings"
@@ -101,6 +102,15 @@ func TestSettingRegion(t *testing.T) {
 	expected := "us-east-2"
 	if method.region != expected {
 		t.Errorf("method.region = %s; expected %s", method.region, expected)
+	}
+}
+
+func TestComputeHash(t *testing.T) {
+	method := New(logger(t))
+	hashed := method.computeHash(sha256.New(), []byte("hello"))
+	expected := "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
+	if hashed != expected {
+		t.Errorf("method.computeHash(sha256.New(), []byte(\"hello\")) = %s; expected %s", hashed, expected)
 	}
 }
 

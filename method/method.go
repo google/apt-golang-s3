@@ -24,6 +24,7 @@ import (
 	"crypto/sha1"
 	"crypto/sha256"
 	"crypto/sha512"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"hash"
@@ -167,7 +168,7 @@ func (m *Method) readInput(input io.Reader) {
 	for {
 		hasLine := scanner.Scan()
 		if hasLine {
-			line := fmt.Sprintf("%s\n", scanner.Text())
+			line := scanner.Text() + "\n"
 			buffer.WriteString(line)
 			trimmed := strings.TrimRight(line, "\n")
 
@@ -608,7 +609,7 @@ func (m *Method) sha512Field(bytes []byte) *message.Field {
 
 func (m *Method) computeHash(h hash.Hash, fileBytes []byte) string {
 	m.prepareHash(h, fileBytes)
-	return fmt.Sprintf("%x", h.Sum(nil))
+	return hex.EncodeToString(h.Sum(nil))
 }
 
 func (m *Method) prepareHash(h hash.Hash, fileBytes []byte) {

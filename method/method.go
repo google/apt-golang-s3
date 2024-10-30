@@ -321,6 +321,7 @@ func (m *Method) uriAcquire(msg *message.Message) {
 	headObjectInput := &s3.HeadObjectInput{Bucket: &ol.bucket, Key: &ol.key}
 	headObjectOutput, err := client.HeadObject(headObjectInput)
 	if err != nil {
+		//nolint:errorlint
 		if reqErr, ok := err.(awserr.RequestFailure); ok {
 			if reqErr.StatusCode() == 404 {
 				m.outputNotFound(ol.uri)

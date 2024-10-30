@@ -49,18 +49,18 @@ type Message struct {
 // FromBytes takes a byte representation of a Message and unmarshals it into a
 // Message.
 func FromBytes(b []byte) (*Message, error) {
-	m, err := parse(string(b))
+	msg, err := parse(string(b))
 	if err != nil {
 		return nil, err
 	}
-	return &m, nil
+	return &msg, nil
 }
 
 // GetFieldValue returns the Value property of the Field with the given name.
 // If no field is found with the given name, it returns a zero length string.
 // This is useful for Fields that appear only once in a given Message.
-func (m *Message) GetFieldValue(name string) (string, bool) {
-	for _, f := range m.Fields {
+func (msg *Message) GetFieldValue(name string) (string, bool) {
+	for _, f := range msg.Fields {
 		if f.Name == name {
 			return f.Value, true
 		}
@@ -71,9 +71,9 @@ func (m *Message) GetFieldValue(name string) (string, bool) {
 // GetFieldList returns a slice of Fields with the given name. This is useful
 // when looking for a collection of fields with a given name from the same
 // Message, e.g. 'Config-Item'.
-func (m *Message) GetFieldList(name string) []*Field {
+func (msg *Message) GetFieldList(name string) []*Field {
 	fields := []*Field{}
-	for _, f := range m.Fields {
+	for _, f := range msg.Fields {
 		if f.Name == name {
 			fields = append(fields, f)
 		}
@@ -83,13 +83,13 @@ func (m *Message) GetFieldList(name string) []*Field {
 
 // String returns a string representation of a Message formatted according to
 // the APT method interface.
-func (m *Message) String() string {
+func (msg *Message) String() string {
 	buf := &bytes.Buffer{}
-	for _, f := range m.Fields {
+	for _, f := range msg.Fields {
 		buf.WriteString(f.String())
 		buf.WriteString("\n")
 	}
-	return fmt.Sprintf("%s\n%s", m.Header.String(), buf.String())
+	return fmt.Sprintf("%s\n%s", msg.Header.String(), buf.String())
 }
 
 // String returns a string representation of a Header formatted according to

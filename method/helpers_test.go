@@ -61,14 +61,14 @@ func TestS3EndpointURL(t *testing.T) {
 
 	for region, spec := range specs {
 		t.Run(region, func(t *testing.T) {
-			u, err := s3EndpointURL(region)
+			s3URL, err := s3EndpointURL(region)
 			if err != nil && !spec.expectError {
 				t.Errorf("expected s3EndpointURL(%#v) not to return an error but got %#v", region, err)
 			} else if err == nil && spec.expectError {
 				t.Errorf("expected s3EndpointURL(%#v) to return an error but got none", region)
 			}
 
-			if diff := cmp.Diff(spec.expectedURL, u); diff != "" {
+			if diff := cmp.Diff(spec.expectedURL, s3URL); diff != "" {
 				t.Errorf("s3EndpointURL(%#v) mismatch (-want +got):\n%s", region, diff)
 			}
 		})

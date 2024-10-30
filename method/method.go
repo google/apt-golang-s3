@@ -28,7 +28,6 @@ import (
 	"fmt"
 	"hash"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/url"
 	"os"
@@ -451,7 +450,7 @@ func (m *Method) uriDone(s3Uri *url.URL, size int64, t time.Time, filename strin
 	filenameField := field(fieldNameFilename, filename)
 	sizeField := field(fieldNameSize, strconv.FormatInt(size, 10))
 	lmField := m.lastModified(t)
-	fileBytes, err := ioutil.ReadFile(filename)
+	fileBytes, err := os.ReadFile(filename)
 	m.handleError(err)
 
 	fields := []*message.Field{

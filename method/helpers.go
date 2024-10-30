@@ -18,12 +18,13 @@ import (
 	"net/url"
 
 	"github.com/aws/aws-sdk-go/aws/endpoints"
+	"github.com/aws/aws-sdk-go/service/s3"
 )
 
 func s3EndpointURL(region string) (*url.URL, error) {
 	resolver := endpoints.DefaultResolver()
 
-	endpoint, err := resolver.EndpointFor(endpoints.S3ServiceID, region, endpoints.StrictMatchingOption)
+	endpoint, err := resolver.EndpointFor(s3.EndpointsID, region, endpoints.StrictMatchingOption)
 	if err != nil {
 		return nil, fmt.Errorf("resolving S3 endpoint for region %s: %w", region, err)
 	}

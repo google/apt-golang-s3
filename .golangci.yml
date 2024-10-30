@@ -13,6 +13,7 @@ linters:
     - gosec
     - govet
     - lll
+    - staticcheck
 
 # All available settings of specific linters.
 linters-settings:

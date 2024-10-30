@@ -18,6 +18,7 @@ linters:
     - lll
     - staticcheck
     - stylecheck
+    - unused
 
 # All available settings of specific linters.
 linters-settings:

@@ -29,6 +29,7 @@ import (
 	"hash"
 	"io"
 	"log"
+	"net/http"
 	"net/url"
 	"os"
 	"strconv"
@@ -101,6 +102,11 @@ const (
 const (
 	configItemAcquireS3Region = "Acquire::s3::region"
 	configItemAcquireS3Role   = "Acquire::s3::role"
+)
+
+const (
+	locationMinTokensCount              = 3
+	userAndPasswordFormattedTokensCount = 2
 )
 
 var (
@@ -244,7 +250,7 @@ func newLocation(value, s3Hostname string) (objectLocation, error) {
 		// Splitting "/bucket/this/is/a/path" on "/" produces
 		// ["", "bucket", "this", "is", "a", "path"]
 		// Note the initial empty string
-		if len(tokens) < 3 {
+		if len(tokens) < locationMinTokensCount {
 			return objectLocation{}, errLocMissingRequiredTokens
 		}
 
@@ -284,7 +290,7 @@ func preProcessURL(url string) string {
 	key := ""
 	secret := ""
 	tkns := strings.Split(sub, ":")
-	if len(tkns) == 2 {
+	if len(tkns) == userAndPasswordFormattedTokensCount {
 		key = tkns[0]
 		secret = tkns[1]
 	}
@@ -323,7 +329,7 @@ func (m *Method) uriAcquire(msg *message.Message) {
 	if err != nil {
 		//nolint:errorlint
 		if reqErr, ok := err.(awserr.RequestFailure); ok {
-			if reqErr.StatusCode() == 404 {
+			if reqErr.StatusCode() == http.StatusNotFound {
 				m.outputNotFound(ol.uri)
 				return
 			}

@@ -108,11 +108,15 @@ var (
 	errMsgMissingRequiredLines = errors.New("message missing required number of lines")
 )
 
+const (
+	msgMinLineCount = 2
+)
+
 // parse splits a string message by line, and then constructs a Message from a
 // Header and slice of Fields.
 func parse(value string) (Message, error) {
 	lines := strings.Split(strings.TrimSpace(value), "\n")
-	if len(lines) < 2 {
+	if len(lines) < msgMinLineCount {
 		return Message{}, errMsgMissingRequiredLines
 	}
 	headerLine := lines[0]

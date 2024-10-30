@@ -32,11 +32,17 @@ linters:
     - godot
     - gofmt
     - goheader
+    - goimports
+    - goprintffuncname
+    - grouper
+    - importas
     - gosec
     - gosimple
     - govet
     - ineffassign
     - lll
+    - misspell
+    - mnd
     - staticcheck
     - stylecheck
     - unused

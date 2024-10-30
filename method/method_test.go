@@ -88,7 +88,7 @@ func TestSettingRegion(t *testing.T) {
 	method := New()
 	go method.readInput(reader)
 
-	//consume the messages on the channel
+	// consume the messages on the channel
 	for {
 		bytes := <-method.msgChan
 		method.handleBytes(bytes)

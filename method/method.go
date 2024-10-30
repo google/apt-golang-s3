@@ -503,7 +503,7 @@ func generalLog(status string) *message.Message {
 // Message: Error retrieving ...
 func generalFailure(err error) *message.Message {
 	h := header(headerCodeGeneralFailure, headerDescriptionGeneralFailure)
-	msg := strings.Replace(err.Error(), "\n", " ", -1)
+	msg := strings.ReplaceAll(err.Error(), "\n", " ")
 	messageField := field(fieldNameMessage, msg)
 	return &message.Message{Header: h, Fields: []*message.Field{messageField}}
 }

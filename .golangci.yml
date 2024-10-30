@@ -26,6 +26,8 @@ linters:
     - errorlint
     - exhaustive
     - gci
+    - goconst
+    - gocritic
     - gofmt
     - goheader
     - gosec

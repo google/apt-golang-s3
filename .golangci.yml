@@ -26,8 +26,13 @@ linters:
     - errorlint
     - exhaustive
     - forbidigo
+    - forcetypeassert
+    - funlen
     - gci
     - gochecknoglobals
+    - gochecknoinits
+    - gochecksumtype
+    - gocognit
     - goconst
     - gocritic
     - gocyclo
@@ -45,8 +50,24 @@ linters:
     - lll
     - misspell
     - mnd
+    - nakedret
+    - nestif
+    - nilerr
+    - nilnil
     - nlreturn
+    - nolintlint
+    - nonamedreturns
+    - nosprintfhostport
     - perfsprint
+    - prealloc
+    - predeclared
+    - reassign
+    - thelper
+    - unconvert
+    - unparam
+    - usestdlibvars
+    - wastedassign
+    - whitespace
     - staticcheck
     - stylecheck
     - unused
@@ -104,6 +125,11 @@ linters-settings:
     # See https://github.com/kisielk/errcheck#excluding-functions for details.
     exclude-functions:
       - (*bytes.Buffer).WriteString # WriteString is documented as always returning a nil error
+
+  gocognit:
+    # Minimal code complexity to report.
+    # Default: 30 (but we recommend 10-20)
+    min-complexity: 10
 
   gocyclo:
     # Minimal code complexity to report.
@@ -186,9 +212,23 @@ linters-settings:
     line-length: 140
     # Tab width in spaces.
     # Default: 1
+    tab-width: 1
+
+  nestif:
+    # Minimal complexity of if statements to report.
+    # Default: 5
+    min-complexity: 5
 
   nlreturn:
     # Size of the block (including return statement that is still "OK")
     # so no return split required.
     # Default: 1
     block-size: 10
+
+  whitespace:
+    # Enforces newlines (or comments) after every multi-line if statement.
+    # Default: false
+    multi-if: true
+    # Enforces newlines (or comments) after every multi-line function signature.
+    # Default: false
+    multi-func: true

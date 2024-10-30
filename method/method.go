@@ -104,6 +104,13 @@ const (
 	configItemAcquireS3Role   = "Acquire::s3::role"
 )
 
+var (
+	errLocMissingRequiredTokens           = errors.New("location missing required number of tokens")
+	errAcqMsgMissingRequiredFieldURI      = errors.New("acquire message missing required field: URI")
+	errAcqMsgMissingRequiredFieldFilename = errors.New("acquire message missing required field: Filename")
+	errAcqMsgMissingRequiredFieldPassword = errors.New("acquire message missing required value: Password")
+)
+
 // A Method implements the logic to process incoming apt messages and respond
 // accordingly.
 type Method struct {
@@ -239,7 +246,7 @@ func newLocation(value, s3Hostname string) (objectLocation, error) {
 		// ["", "bucket", "this", "is", "a", "path"]
 		// Note the initial empty string
 		if len(tokens) < 3 {
-			return objectLocation{}, errors.New("location missing required number of tokens")
+			return objectLocation{}, errLocMissingRequiredTokens
 		}
 
 		// the first non-zero length string is assumed to be the bucket. the rest are
@@ -297,7 +304,7 @@ func (m *Method) uriAcquire(msg *message.Message) {
 
 	uri, hasField := msg.GetFieldValue(fieldNameURI)
 	if !hasField {
-		m.handleError(errors.New("acquire message missing required field: URI"))
+		m.handleError(errAcqMsgMissingRequiredFieldURI)
 	}
 
 	s3URL, err := s3EndpointURL(m.region)
@@ -334,7 +341,7 @@ func (m *Method) uriAcquire(msg *message.Message) {
 
 	filename, hasField := msg.GetFieldValue(fieldNameFilename)
 	if !hasField {
-		m.handleError(errors.New("acquire message missing required field: Filename"))
+		m.handleError(errAcqMsgMissingRequiredFieldFilename)
 	}
 	file, err := os.Create(filename)
 	m.handleError(err)
@@ -367,7 +374,7 @@ func (m *Method) s3Client(user *url.Userinfo) s3iface.S3API {
 		if secretAccessKey, ok := user.Password(); ok {
 			config.Credentials = credentials.NewStaticCredentials(accessKeyID, secretAccessKey, "")
 		} else {
-			m.handleError(errors.New("acquire message missing required value: Password"))
+			m.handleError(errAcqMsgMissingRequiredFieldPassword)
 		}
 	} else if m.roleARN != "" {
 		// Use default credential chain to assume specified role

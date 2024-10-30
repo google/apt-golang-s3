@@ -5,11 +5,46 @@ linters:
   # Enable specific linter
   # https://golangci-lint.run/usage/linters/#enabled-by-default
   enable:
+    - depguard
     - gofmt
     - goheader
 
 # All available settings of specific linters.
 linters-settings:
+  depguard:
+    # Rules to apply.
+    #
+    # Variables:
+    # - File Variables
+    #   you can still use and exclamation mark ! in front of a variable to say not to use it.
+    #   Example !$test will match any file that is not a go test file.
+    #
+    #   `$all` - matches all go files
+    #   `$test` - matches all go test files
+    #
+    # - Package Variables
+    #
+    #  `$gostd` - matches all of go's standard library (Pulled from `GOROOT`)
+    #
+    # Default: Only allow $gostd in all files.
+    rules:
+      # Name of a rule.
+      main:
+        # Used to determine the package matching priority.
+        # There are three different modes: `original`, `strict`, and `lax`.
+        # Default: "original"
+        list-mode: original
+        # List of file globs that will match this list of settings to compare against.
+        # Default: $all
+        files:
+          - "**/*.go"
+        # List of allowed packages.
+        allow:
+          - $gostd
+          - github.com/aws/aws-sdk-go
+          - github.com/google/apt-golang-s3
+          - github.com/google/go-cmp/cmp
+
   goheader:
     # Supports two types 'const` and `regexp`.
     # Values can be used recursively.

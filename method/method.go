@@ -485,6 +485,10 @@ func notFound(s3Uri *url.URL) *message.Message {
 //
 // 101 Log
 // Message: Set the s3 region to us-west-1 based on Config-Item Acquire::s3:region.
+//
+// This function is unused, but it's part of the spec...
+//
+//nolint:unused
 func generalLog(status string) *message.Message {
 	h := header(headerCodeGeneralLog, headerDescriptionGeneralLog)
 	messageField := field(fieldNameMessage, status)
@@ -508,6 +512,9 @@ func (m *Method) outputRequestStatus(s3Uri *url.URL, status string) {
 	m.stdout.Println(msg.String())
 }
 
+// This function is unused, but it's part of the spec...
+//
+//nolint:unused
 func (m *Method) outputGeneralLog(status string) {
 	msg := generalLog(status)
 	m.stdout.Println(msg.String())

@@ -24,6 +24,7 @@ linters:
     - errcheck
     - errname
     - errorlint
+    - exhaustive
     - gci
     - gofmt
     - goheader

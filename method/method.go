@@ -443,6 +443,8 @@ func (m *Method) uriStart(s3Uri *url.URL, size int64, t time.Time) *message.Mess
 // SHA1-Hash: 0d02ab49503be20d153cea63a472c43ebfad2efc
 // SHA256-Hash: 92a3f70eb1cf2c69880988a8e74dc6fea7e4f15ee261f74b9be55c866f69c64b
 // SHA512-Hash: ab3b1c94618cb58e2147db1c1d4bd3472f17fb11b1361e77216b461ab7d5f5952a5c6bb0443a1507d8ca5ef1eb18ac7552d0f2a537a0d44b8612d7218bf379fb
+//
+//nolint:lll
 func (m *Method) uriDone(s3Uri *url.URL, size int64, t time.Time, filename string) *message.Message {
 	h := header(headerCodeURIDone, headerDescriptionURIDone)
 	uriField := field(fieldNameURI, s3Uri.String())

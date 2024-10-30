@@ -24,6 +24,7 @@ Foo: bar
 Baz: false
 Filename: apt-transport.deb
 `
+	//nolint:lll
 	configMsg = `601 Configuration
 Config-Item: APT::Architecture=amd64
 Config-Item: APT::Build-Essential::=build-essential

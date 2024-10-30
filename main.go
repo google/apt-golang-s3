@@ -31,6 +31,7 @@ const (
 )
 
 var (
+	//nolint:gochecknoglobals
 	showVersion = flag.Bool("version", false, "Print version and exit")
 )
 

@@ -27,6 +27,7 @@ linters:
     - exhaustive
     - forbidigo
     - gci
+    - gochecknoglobals
     - goconst
     - gocritic
     - gocyclo

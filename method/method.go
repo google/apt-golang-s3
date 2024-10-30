@@ -130,13 +130,13 @@ type Method struct {
 // New returns a new Method configured to read from os.Stdin and write to
 // the given *log.Logger.
 func New(logger *log.Logger) *Method {
-	var wg sync.WaitGroup
-	wg.Add(1)
+	var waitGroup sync.WaitGroup
+	waitGroup.Add(1)
 	return &Method{
 		region:     endpoints.UsEast1RegionID,
 		msgChan:    make(chan []byte),
 		configured: false,
-		wg:         &wg,
+		wg:         &waitGroup,
 		stdout:     logger,
 	}
 }
@@ -144,16 +144,16 @@ func New(logger *log.Logger) *Method {
 // Run flushes the Method's capabilities and then begins reading messages from
 // os.Stdin. Results are written to os.Stdout. The running Method waits for all
 // Messages to be processed before exiting.
-func (m *Method) Run() {
-	m.flushCapabilities()
-	go m.readInput(os.Stdin)
-	go m.processMessages()
-	m.wg.Wait()
+func (method *Method) Run() {
+	method.flushCapabilities()
+	go method.readInput(os.Stdin)
+	go method.processMessages()
+	method.wg.Wait()
 }
 
-func (m *Method) flushCapabilities() {
+func (method *Method) flushCapabilities() {
 	msg := capabilities()
-	m.stdout.Println(msg)
+	method.stdout.Println(msg)
 }
 
 // readInput reads from the provided io.Reader and flushes each message to the
@@ -162,7 +162,7 @@ func (m *Method) flushCapabilities() {
 // messages have been read from the io.Reader, the Method's sync.WaitGroup is
 // decremented by 1. Each code path that processes a message is responsible for
 // decrementing the WaitGroup when the code path terminates.
-func (m *Method) readInput(input io.Reader) {
+func (method *Method) readInput(input io.Reader) {
 	scanner := bufio.NewScanner(input)
 	buffer := &bytes.Buffer{}
 	for {
@@ -176,15 +176,15 @@ func (m *Method) readInput(input io.Reader) {
 			// comes in and the buffer already has some content, it's assuming that
 			// the buffer currently contains a complete message ready to be processed.
 			if len(trimmed) == 0 && buffer.Len() > 3 {
-				m.msgChan <- buffer.Bytes()
-				m.wg.Add(1)
+				method.msgChan <- buffer.Bytes()
+				method.wg.Add(1)
 				buffer = &bytes.Buffer{}
 			}
 		} else {
 			break
 		}
 	}
-	m.wg.Done()
+	method.wg.Done()
 }
 
 func capabilities() *message.Message {
@@ -199,32 +199,32 @@ func capabilities() *message.Message {
 
 // processMessages loops over the channel of Messages
 // and starts a goroutine to process each Message.
-func (m *Method) processMessages() {
+func (method *Method) processMessages() {
 	for {
-		bytes := <-m.msgChan
-		go m.handleBytes(bytes)
+		bytes := <-method.msgChan
+		go method.handleBytes(bytes)
 	}
 }
 
 // handleBytes initializes a new Message and dispatches it according to
 // the Message.Header.Status value.
-func (m *Method) handleBytes(b []byte) {
+func (method *Method) handleBytes(b []byte) {
 	msg, err := message.FromBytes(b)
-	m.handleError(err)
+	method.handleError(err)
 	if msg.Header.Status == headerCodeURIAcquire {
 		// URI Acquire message
-		m.uriAcquire(msg)
+		method.uriAcquire(msg)
 	} else if msg.Header.Status == headerCodeConfiguration {
 		// Configuration message
-		m.configure(msg)
+		method.configure(msg)
 	}
 }
 
 // waitForConfiguration ensures that the configuration Message from APT
 // has been fully processed before continuing.
-func (m *Method) waitForConfiguration() {
+func (method *Method) waitForConfiguration() {
 	for {
-		if m.configured {
+		if method.configured {
 			return
 		}
 		time.Sleep(1 * time.Millisecond)
@@ -304,87 +304,87 @@ func preProcessURL(url string) string {
 
 // uriAcquire downloads and stores objects from S3 based on the contents
 // of the provided Message.
-func (m *Method) uriAcquire(msg *message.Message) {
-	m.waitForConfiguration()
+func (method *Method) uriAcquire(msg *message.Message) {
+	method.waitForConfiguration()
 
 	uri, hasField := msg.GetFieldValue(fieldNameURI)
 	if !hasField {
-		m.handleError(errAcqMsgMissingRequiredFieldURI)
+		method.handleError(errAcqMsgMissingRequiredFieldURI)
 	}
 
-	s3URL, err := s3EndpointURL(m.region)
+	s3URL, err := s3EndpointURL(method.region)
 	if err != nil {
-		m.handleError(fmt.Errorf("resolving S3 endpoint for region %s: %w", m.region, err))
+		method.handleError(fmt.Errorf("resolving S3 endpoint for region %s: %w", method.region, err))
 	}
 
-	ol, err := newLocation(uri, s3URL.Hostname())
-	m.handleError(err)
+	objLoc, err := newLocation(uri, s3URL.Hostname())
+	method.handleError(err)
 
-	m.outputRequestStatus(ol.uri, fieldValueConnecting)
+	method.outputRequestStatus(objLoc.uri, fieldValueConnecting)
 
-	client := m.s3Client(ol.uri.User)
+	client := method.s3Client(objLoc.uri.User)
 
-	headObjectInput := &s3.HeadObjectInput{Bucket: &ol.bucket, Key: &ol.key}
+	headObjectInput := &s3.HeadObjectInput{Bucket: &objLoc.bucket, Key: &objLoc.key}
 	headObjectOutput, err := client.HeadObject(headObjectInput)
 	if err != nil {
 		//nolint:errorlint
 		if reqErr, ok := err.(awserr.RequestFailure); ok {
 			if reqErr.StatusCode() == http.StatusNotFound {
-				m.outputNotFound(ol.uri)
+				method.outputNotFound(objLoc.uri)
 				return
 			}
 			// if the error is an awserr.RequestFailure, but the status was not 404
 			// handle the error
-			m.handleError(err)
+			method.handleError(err)
 		} else {
-			m.handleError(err)
+			method.handleError(err)
 		}
 	}
 
 	expectedLen := *headObjectOutput.ContentLength
 	lastModified := *headObjectOutput.LastModified
-	m.outputURIStart(ol.uri, expectedLen, lastModified)
+	method.outputURIStart(objLoc.uri, expectedLen, lastModified)
 
 	filename, hasField := msg.GetFieldValue(fieldNameFilename)
 	if !hasField {
-		m.handleError(errAcqMsgMissingRequiredFieldFilename)
+		method.handleError(errAcqMsgMissingRequiredFieldFilename)
 	}
 	file, err := os.Create(filename)
-	m.handleError(err)
+	method.handleError(err)
 	defer file.Close()
 
 	downloader := s3manager.NewDownloaderWithClient(client)
 	numBytes, err := downloader.Download(file,
 		&s3.GetObjectInput{
-			Bucket: aws.String(ol.bucket),
-			Key:    aws.String(ol.key),
+			Bucket: aws.String(objLoc.bucket),
+			Key:    aws.String(objLoc.key),
 		})
-	m.handleError(err)
+	method.handleError(err)
 
-	m.outputURIDone(ol.uri, numBytes, lastModified, filename)
+	method.outputURIDone(objLoc.uri, numBytes, lastModified, filename)
 }
 
 // s3Client provides an initialized s3iface.S3API based on the contents of the
 // provided url.URL. The access key id and secret access key are assumed to
 // correspond to the Username() and Password() functions on the URL's User.
-func (m *Method) s3Client(user *url.Userinfo) s3iface.S3API {
+func (method *Method) s3Client(user *url.Userinfo) s3iface.S3API {
 	config := &aws.Config{
-		Region: aws.String(m.region),
+		Region: aws.String(method.region),
 	}
 	sess, err := session.NewSession(config)
 	if err != nil {
-		m.handleError(fmt.Errorf("creating AWS session: %w", err))
+		method.handleError(fmt.Errorf("creating AWS session: %w", err))
 	}
 	if accessKeyID := user.Username(); accessKeyID != "" {
 		// Use explicitly specified static credentials to access S3
 		if secretAccessKey, ok := user.Password(); ok {
 			config.Credentials = credentials.NewStaticCredentials(accessKeyID, secretAccessKey, "")
 		} else {
-			m.handleError(errAcqMsgMissingRequiredFieldPassword)
+			method.handleError(errAcqMsgMissingRequiredFieldPassword)
 		}
-	} else if m.roleARN != "" {
+	} else if method.roleARN != "" {
 		// Use default credential chain to assume specified role
-		config.Credentials = stscreds.NewCredentials(sess, m.roleARN)
+		config.Credentials = stscreds.NewCredentials(sess, method.roleARN)
 	}
 
 	return s3.New(sess, config)
@@ -394,19 +394,19 @@ func (m *Method) s3Client(user *url.Userinfo) s3iface.S3API {
 // sets the appropriate state on the Method based on the field values. Once the
 // configuration has been applied, the Method's sync.WaitGroup is decremented
 // by 1.
-func (m *Method) configure(msg *message.Message) {
+func (method *Method) configure(msg *message.Message) {
 	items := msg.GetFieldList(fieldNameConfigItem)
 	for _, f := range items {
 		config := strings.Split(f.Value, "=")
 		switch config[0] {
 		case configItemAcquireS3Region:
-			m.region = config[1]
+			method.region = config[1]
 		case configItemAcquireS3Role:
-			m.roleARN = config[1]
+			method.roleARN = config[1]
 		}
 	}
-	m.configured = true
-	m.wg.Done()
+	method.configured = true
+	method.wg.Done()
 }
 
 // requestStatus constructs a Message that when printed looks like the
@@ -429,11 +429,11 @@ func requestStatus(s3Uri *url.URL, status string) *message.Message {
 // URI: s3://fake-access-key-id:fake-secret-access-key@s3.amazonaws.com/bucket-name/apt/trusty/riemann-sumd_0.7.2-1_all.deb
 // Size: 9012
 // Last-Modified: Thu, 25 Oct 2018 20:17:39 GMT
-func (m *Method) uriStart(s3Uri *url.URL, size int64, t time.Time) *message.Message {
+func (method *Method) uriStart(s3Uri *url.URL, size int64, t time.Time) *message.Message {
 	h := header(headerCodeURIStart, headerDescriptionURIStart)
 	uriField := field(fieldNameURI, s3Uri.String())
 	sizeField := field(fieldNameSize, strconv.FormatInt(size, 10))
-	lmField := m.lastModified(t)
+	lmField := method.lastModified(t)
 	return &message.Message{Header: h, Fields: []*message.Field{uriField, sizeField, lmField}}
 }
 
@@ -452,24 +452,24 @@ func (m *Method) uriStart(s3Uri *url.URL, size int64, t time.Time) *message.Mess
 // SHA512-Hash: ab3b1c94618cb58e2147db1c1d4bd3472f17fb11b1361e77216b461ab7d5f5952a5c6bb0443a1507d8ca5ef1eb18ac7552d0f2a537a0d44b8612d7218bf379fb
 //
 //nolint:lll
-func (m *Method) uriDone(s3Uri *url.URL, size int64, t time.Time, filename string) *message.Message {
+func (method *Method) uriDone(s3Uri *url.URL, size int64, t time.Time, filename string) *message.Message {
 	uriField := field(fieldNameURI, s3Uri.String())
 	filenameField := field(fieldNameFilename, filename)
 	sizeField := field(fieldNameSize, strconv.FormatInt(size, 10))
-	lmField := m.lastModified(t)
+	lmField := method.lastModified(t)
 	fileBytes, err := os.ReadFile(filename)
-	m.handleError(err)
+	method.handleError(err)
 
 	fields := []*message.Field{
 		uriField,
 		filenameField,
 		sizeField,
 		lmField,
-		m.md5Field(fileBytes),
-		m.md5SumField(fileBytes),
-		m.sha1Field(fileBytes),
-		m.sha256Field(fileBytes),
-		m.sha512Field(fileBytes),
+		method.md5Field(fileBytes),
+		method.md5SumField(fileBytes),
+		method.sha1Field(fileBytes),
+		method.sha256Field(fileBytes),
+		method.sha512Field(fileBytes),
 	}
 
 	return &message.Message{Header: header(headerCodeURIDone, headerDescriptionURIDone), Fields: fields}
@@ -515,50 +515,50 @@ func generalFailure(err error) *message.Message {
 	return &message.Message{Header: h, Fields: []*message.Field{messageField}}
 }
 
-func (m *Method) outputRequestStatus(s3Uri *url.URL, status string) {
+func (method *Method) outputRequestStatus(s3Uri *url.URL, status string) {
 	msg := requestStatus(s3Uri, status)
-	m.stdout.Println(msg.String())
+	method.stdout.Println(msg.String())
 }
 
 // This function is unused, but it's part of the spec...
 //
 //nolint:unused
-func (m *Method) outputGeneralLog(status string) {
+func (method *Method) outputGeneralLog(status string) {
 	msg := generalLog(status)
-	m.stdout.Println(msg.String())
+	method.stdout.Println(msg.String())
 }
 
-func (m *Method) outputURIStart(s3Uri *url.URL, size int64, lastModified time.Time) {
-	msg := m.uriStart(s3Uri, size, lastModified)
-	m.stdout.Println(msg.String())
+func (method *Method) outputURIStart(s3Uri *url.URL, size int64, lastModified time.Time) {
+	msg := method.uriStart(s3Uri, size, lastModified)
+	method.stdout.Println(msg.String())
 }
 
 // outputURIDone prints a message including the details of the finished URI,
 // and subsequently decrements the Method's sync.WaitGroup by 1.
-func (m *Method) outputURIDone(s3Uri *url.URL, size int64, lastModified time.Time, filename string) {
-	msg := m.uriDone(s3Uri, size, lastModified, filename)
-	m.stdout.Println(msg.String())
-	m.wg.Done()
+func (method *Method) outputURIDone(s3Uri *url.URL, size int64, lastModified time.Time, filename string) {
+	msg := method.uriDone(s3Uri, size, lastModified, filename)
+	method.stdout.Println(msg.String())
+	method.wg.Done()
 }
 
 // outputURIDone prints a message including the details of the URI that could
 // not be found, and subsequently decrements the Method's sync.WaitGroup by 1.
-func (m *Method) outputNotFound(s3Uri *url.URL) {
+func (method *Method) outputNotFound(s3Uri *url.URL) {
 	msg := notFound(s3Uri)
-	m.stdout.Println(msg.String())
-	m.wg.Done()
+	method.stdout.Println(msg.String())
+	method.wg.Done()
 }
 
-func (m *Method) outputGeneralFailure(err error) {
+func (method *Method) outputGeneralFailure(err error) {
 	msg := generalFailure(err)
-	m.stdout.Println(msg.String())
+	method.stdout.Println(msg.String())
 }
 
 // handleError writes the contents of the given error and then exits the
 // program, as specified in the APT method interface documentation.
-func (m *Method) handleError(err error) {
+func (method *Method) handleError(err error) {
 	if err != nil {
-		m.outputGeneralFailure(err)
+		method.outputGeneralFailure(err)
 		os.Exit(1)
 	}
 }
@@ -573,49 +573,49 @@ func field(name string, value string) *message.Field {
 
 // lastModified returns a Field with the given Time formatted using the RFC1123
 // specification in GMT, as specified in the APT method interface documentation.
-func (m *Method) lastModified(t time.Time) *message.Field {
+func (method *Method) lastModified(t time.Time) *message.Field {
 	gmt, err := time.LoadLocation("GMT")
-	m.handleError(err)
+	method.handleError(err)
 	return field(fieldNameLastModified, t.In(gmt).Format(time.RFC1123))
 }
 
-func (m *Method) md5Field(bytes []byte) *message.Field {
+func (method *Method) md5Field(bytes []byte) *message.Field {
 	md5 := md5.New()
-	md5String := m.computeHash(md5, bytes)
+	md5String := method.computeHash(md5, bytes)
 	return field(fieldNameMD5Hash, md5String)
 }
 
-func (m *Method) md5SumField(bytes []byte) *message.Field {
+func (method *Method) md5SumField(bytes []byte) *message.Field {
 	md5 := md5.New()
-	md5String := m.computeHash(md5, bytes)
+	md5String := method.computeHash(md5, bytes)
 	return field(fieldNameMD5SumHash, md5String)
 }
 
-func (m *Method) sha1Field(bytes []byte) *message.Field {
+func (method *Method) sha1Field(bytes []byte) *message.Field {
 	sha1 := sha1.New()
-	sha1String := m.computeHash(sha1, bytes)
+	sha1String := method.computeHash(sha1, bytes)
 	return field(fieldNameSHA1Hash, sha1String)
 }
 
-func (m *Method) sha256Field(bytes []byte) *message.Field {
+func (method *Method) sha256Field(bytes []byte) *message.Field {
 	sha256 := sha256.New()
-	sha256String := m.computeHash(sha256, bytes)
+	sha256String := method.computeHash(sha256, bytes)
 	return field(fieldNameSHA256Hash, sha256String)
 }
 
-func (m *Method) sha512Field(bytes []byte) *message.Field {
+func (method *Method) sha512Field(bytes []byte) *message.Field {
 	sha512 := sha512.New()
-	sha512String := m.computeHash(sha512, bytes)
+	sha512String := method.computeHash(sha512, bytes)
 	return field(fieldNameSHA512Hash, sha512String)
 }
 
-func (m *Method) computeHash(h hash.Hash, fileBytes []byte) string {
-	m.prepareHash(h, fileBytes)
+func (method *Method) computeHash(h hash.Hash, fileBytes []byte) string {
+	method.prepareHash(h, fileBytes)
 	return hex.EncodeToString(h.Sum(nil))
 }
 
-func (m *Method) prepareHash(h hash.Hash, fileBytes []byte) {
+func (method *Method) prepareHash(h hash.Hash, fileBytes []byte) {
 	if _, err := io.Copy(h, bytes.NewReader(fileBytes)); err != nil {
-		m.handleError(err)
+		method.handleError(err)
 	}
 }

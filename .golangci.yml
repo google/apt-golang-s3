@@ -70,6 +70,7 @@ linters:
     - whitespace
     - staticcheck
     - stylecheck
+    - varnamelen
     - unused
 
 # All available settings of specific linters.
@@ -224,6 +225,46 @@ linters-settings:
     # so no return split required.
     # Default: 1
     block-size: 10
+
+  varnamelen:
+    # The longest distance, in source lines, that is being considered a "small scope".
+    # Variables used in at most this many lines will be ignored.
+    # Default: 5
+    max-distance: 5
+    # The minimum length of a variable's name that is considered "long".
+    # Variable names that are at least this long will be ignored.
+    # Default: 3
+    min-name-length: 3
+    # Check method receivers.
+    # Default: false
+    check-receiver: true
+    # Check named return values.
+    # Default: false
+    check-return: true
+    # Check type parameters.
+    # Default: false
+    check-type-param: true
+    # Ignore "ok" variables that hold the bool return value of a type assertion.
+    # Default: false
+    ignore-type-assert-ok: true
+    # Ignore "ok" variables that hold the bool return value of a map index.
+    # Default: false
+    ignore-map-index-ok: true
+    # Ignore "ok" variables that hold the bool return value of a channel receive.
+    # Default: false
+    ignore-chan-recv-ok: true
+    # Optional list of variable names that should be ignored completely.
+    # Default: []
+    ignore-names:
+    # Optional list of variable declarations that should be ignored completely.
+    # Entries must be in one of the following forms (see below for examples):
+    # - for variables, parameters, named return values, method receivers, or type parameters:
+    #   <name> <type>  (<type> can also be a pointer/slice/map/chan/...)
+    # - for constants: const <name>
+    #
+    # Default: []
+    ignore-decls:
+
 
   whitespace:
     # Enforces newlines (or comments) after every multi-line if statement.

@@ -149,17 +149,17 @@ func TestCreateLocation(t *testing.T) {
 		},
 	}
 
-	for _, lt := range locTests {
-		l, err := newLocation(lt.url, "s3.amazonaws.com")
+	for _, spec := range locTests {
+		objLoc, err := newLocation(spec.url, "s3.amazonaws.com")
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
-		if l.uri.User.Username() != lt.accessKey {
-			t.Errorf("unexpected accessKey: got %s, want %s", l.uri.User.Username(), lt.accessKey)
+		if objLoc.uri.User.Username() != spec.accessKey {
+			t.Errorf("unexpected accessKey: got %s, want %s", objLoc.uri.User.Username(), spec.accessKey)
 		}
-		pass, _ := l.uri.User.Password()
-		if pass != lt.accessKeySecret {
-			t.Errorf("unexpected accessKeySecret: got %s, want %s", pass, lt.accessKeySecret)
+		pass, _ := objLoc.uri.User.Password()
+		if pass != spec.accessKeySecret {
+			t.Errorf("unexpected accessKeySecret: got %s, want %s", pass, spec.accessKeySecret)
 		}
 	}
 }

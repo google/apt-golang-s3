@@ -52,59 +52,59 @@ Index-File:true
 )
 
 func TestMessageString(t *testing.T) {
-	h := &Header{Status: 700, Description: "Fake Description"}
-	f := []*Field{
+	hdr := &Header{Status: 700, Description: "Fake Description"}
+	fields := []*Field{
 		{Name: "Foo", Value: "bar"},
 		{Name: "Baz", Value: "false"},
 		{Name: "Filename", Value: "apt-transport.deb"},
 	}
-	m := &Message{Header: h, Fields: f}
+	msg := &Message{Header: hdr, Fields: fields}
 
-	actual := m.String()
+	actual := msg.String()
 	if actual != fakeMsg {
 		t.Errorf("m.String() = %s; expected %s", actual, fakeMsg)
 	}
 }
 
 func TestParseConfigurationMsg(t *testing.T) {
-	m, err := FromBytes([]byte(configMsg))
+	msg, err := FromBytes([]byte(configMsg))
 	if err != nil {
 		t.Errorf("Failed to parse %s into a message", configMsg)
 	}
 
 	expectedCount := 12
-	count := len(m.Fields)
+	count := len(msg.Fields)
 	if count != expectedCount {
 		t.Errorf("Expected Fields to contain %d items, but had %d", expectedCount, count)
 	}
 
 	expected := "Config-Item: APT::Architecture=amd64"
-	actual := m.Fields[0].String()
+	actual := msg.Fields[0].String()
 	if actual != expected {
 		t.Errorf("String() = %s;  expected: %s", actual, expected)
 	}
 }
 
 func TestGetFieldValue(t *testing.T) {
-	h := &Header{Status: 700, Description: "Fake Description"}
-	f := []*Field{
+	hdr := &Header{Status: 700, Description: "Fake Description"}
+	fields := []*Field{
 		{Name: "Foo", Value: "bar"},
 		{Name: "Baz", Value: "qux"},
 		{Name: "Filename", Value: "apt-transport.deb"},
 	}
-	m := &Message{Header: h, Fields: f}
+	msg := &Message{Header: hdr, Fields: fields}
 
-	actual, _ := m.GetFieldValue("Foo")
+	actual, _ := msg.GetFieldValue("Foo")
 	expected := "bar"
 	if actual != expected {
 		t.Errorf("m.GetFieldValue(\"Foo\") = %s; expected: %s", actual, expected)
 	}
-	actual, _ = m.GetFieldValue("Baz")
+	actual, _ = msg.GetFieldValue("Baz")
 	expected = "qux"
 	if actual != expected {
 		t.Errorf("m.GetFieldValue(\"Baz\") = %s; expected: %s", actual, expected)
 	}
-	actual, _ = m.GetFieldValue("Filename")
+	actual, _ = msg.GetFieldValue("Filename")
 	expected = "apt-transport.deb"
 	if actual != expected {
 		t.Errorf("m.GetFieldValue(\"Filename\") = %s; expected: %s", actual, expected)
@@ -112,15 +112,15 @@ func TestGetFieldValue(t *testing.T) {
 }
 
 func TestGetFieldList(t *testing.T) {
-	h := &Header{Status: 700, Description: "Fake Description"}
-	f := []*Field{
+	hdr := &Header{Status: 700, Description: "Fake Description"}
+	fields := []*Field{
 		{Name: "Config-Item", Value: "bar"},
 		{Name: "Config-Item", Value: "qux"},
 		{Name: "Filename", Value: "apt-transport.deb"},
 	}
-	m := &Message{Header: h, Fields: f}
+	msg := &Message{Header: hdr, Fields: fields}
 
-	actualLength := len(m.GetFieldList("Config-Item"))
+	actualLength := len(msg.GetFieldList("Config-Item"))
 	expectedLength := 2
 	if actualLength != expectedLength {
 		t.Errorf("Incorrect number of fields '%d' expected: %d", actualLength, expectedLength)
@@ -128,30 +128,30 @@ func TestGetFieldList(t *testing.T) {
 }
 
 func TestParseAcquireMsg(t *testing.T) {
-	m, err := FromBytes([]byte(acqMsg))
+	msg, err := FromBytes([]byte(acqMsg))
 	if err != nil {
 		t.Errorf("Failed to parse %s into a message", acqMsg)
 	}
 
 	expectedCount := 2
-	count := len(m.Fields)
+	count := len(msg.Fields)
 	if count != expectedCount {
 		t.Errorf("Found %d fields; expected %d", count, expectedCount)
 	}
 
-	status := m.Header.Status
+	status := msg.Header.Status
 	expected := 600
 	if status != expected {
 		t.Errorf("Status = %d; expected %d", status, expected)
 	}
 
-	description := m.Header.Description
+	description := msg.Header.Description
 	expectedDesc := "URI Acquire"
 	if description != expectedDesc {
 		t.Errorf("Description = %s; expected %s", description, expectedDesc)
 	}
 
-	value, _ := m.GetFieldValue("Filename")
+	value, _ := msg.GetFieldValue("Filename")
 	expectedVal := "/var/cache/apt/archives/partial/python-bernhard_0.2.3-1_all.deb"
 
 	if value != expectedVal {
@@ -160,18 +160,18 @@ func TestParseAcquireMsg(t *testing.T) {
 }
 
 func TestParseFieldsWithMissingSpaces(t *testing.T) {
-	m, err := FromBytes([]byte(acqMsgNoSpaces))
+	msg, err := FromBytes([]byte(acqMsgNoSpaces))
 	if err != nil {
 		t.Errorf("Failed to parse %s into a message", acqMsgNoSpaces)
 	}
 
-	count := len(m.Fields)
+	count := len(msg.Fields)
 	expected := 4
 	if count != expected {
 		t.Errorf("len(m.Fields) = %d; expected %d", count, expected)
 	}
 
-	field := m.Fields[0]
+	field := msg.Fields[0]
 	expectedName := "URI"
 	expectedVal := "s3://my-s3-repository/project-a/dists/trusty/main/binary-amd64/Packages"
 	if field.Name != expectedName {

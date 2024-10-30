@@ -5,9 +5,24 @@ linters:
   # Enable specific linter
   # https://golangci-lint.run/usage/linters/#enabled-by-default
   enable:
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - canonicalheader
+    - containedctx
+    - contextcheck
+    - copyloopvar
+    - cyclop
+    - decorder
     - depguard
+    - dogsled
+    - dupl
+    - dupword
+    - durationcheck
     - err113
     - errcheck
+    - errname
     - gci
     - gofmt
     - goheader

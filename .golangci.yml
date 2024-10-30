@@ -45,6 +45,7 @@ linters:
     - lll
     - misspell
     - mnd
+    - nlreturn
     - perfsprint
     - staticcheck
     - stylecheck
@@ -185,4 +186,9 @@ linters-settings:
     line-length: 140
     # Tab width in spaces.
     # Default: 1
-    tab-width: 1
+
+  nlreturn:
+    # Size of the block (including return statement that is still "OK")
+    # so no return split required.
+    # Default: 1
+    block-size: 10

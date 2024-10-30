@@ -298,6 +298,7 @@ func preProcessURL(url string) string {
 
 	p := strings.ReplaceAll(url, key, processedKey)
 	p = strings.ReplaceAll(p, secret, processedSecret)
+
 	return p
 }
 
@@ -385,6 +386,7 @@ func (m *Method) s3Client(user *url.Userinfo) s3iface.S3API {
 		// Use default credential chain to assume specified role
 		config.Credentials = stscreds.NewCredentials(sess, m.roleARN)
 	}
+
 	return s3.New(sess, config)
 }
 
@@ -451,7 +453,6 @@ func (m *Method) uriStart(s3Uri *url.URL, size int64, t time.Time) *message.Mess
 //
 //nolint:lll
 func (m *Method) uriDone(s3Uri *url.URL, size int64, t time.Time, filename string) *message.Message {
-	h := header(headerCodeURIDone, headerDescriptionURIDone)
 	uriField := field(fieldNameURI, s3Uri.String())
 	filenameField := field(fieldNameFilename, filename)
 	sizeField := field(fieldNameSize, strconv.FormatInt(size, 10))
@@ -470,7 +471,8 @@ func (m *Method) uriDone(s3Uri *url.URL, size int64, t time.Time, filename strin
 		m.sha256Field(fileBytes),
 		m.sha512Field(fileBytes),
 	}
-	return &message.Message{Header: h, Fields: fields}
+
+	return &message.Message{Header: header(headerCodeURIDone, headerDescriptionURIDone), Fields: fields}
 }
 
 // notFound constructs a Message that when printed looks like the following

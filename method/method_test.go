@@ -15,6 +15,8 @@
 package method
 
 import (
+	"log"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -61,7 +63,7 @@ func TestCapabilities(t *testing.T) {
 
 func TestReadInputFinishes(t *testing.T) {
 	reader := strings.NewReader(acqMsg)
-	method := New()
+	method := New(logger(t))
 	go method.readInput(reader)
 
 	msgs := 0
@@ -85,7 +87,7 @@ loop:
 
 func TestSettingRegion(t *testing.T) {
 	reader := strings.NewReader(configMsg)
-	method := New()
+	method := New(logger(t))
 	go method.readInput(reader)
 
 	// consume the messages on the channel
@@ -150,4 +152,9 @@ func TestCreateLocation(t *testing.T) {
 			t.Errorf("unexpected accessKeySecret: got %s, want %s", pass, lt.accessKeySecret)
 		}
 	}
+}
+
+func logger(t *testing.T) *log.Logger {
+	t.Helper()
+	return log.New(os.Stdout, "", 0)
 }
